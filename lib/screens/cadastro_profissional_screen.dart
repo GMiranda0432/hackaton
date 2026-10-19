@@ -1,5 +1,5 @@
-
 import 'package:flutter/material.dart';
+
 import '../models/profissional.dart';
 
 class CadastroProfissionalScreen extends StatefulWidget {
@@ -27,10 +27,33 @@ class _CadastroProfissionalScreenState
   String _uf = 'ES';
 
   static const List<String> _ufs = [
-    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF',
-    'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA',
-    'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS',
-    'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
+    'AC',
+    'AL',
+    'AP',
+    'AM',
+    'BA',
+    'CE',
+    'DF',
+    'ES',
+    'GO',
+    'MA',
+    'MT',
+    'MS',
+    'MG',
+    'PA',
+    'PB',
+    'PR',
+    'PE',
+    'PI',
+    'RJ',
+    'RN',
+    'RS',
+    'RO',
+    'RR',
+    'SC',
+    'SP',
+    'SE',
+    'TO',
   ];
 
   @override
@@ -41,17 +64,13 @@ class _CadastroProfissionalScreenState
     super.dispose();
   }
 
-  // valida somente o formato do registro
+  // Verifica o formato informado para CRP ou CRM.
   bool _formatoRegistroValido(String registro) {
     if (_tipo == TipoProfissional.psicologo) {
-      return RegExp(
-        r'^\d{1,2}/\d{4,6}$',
-      ).hasMatch(registro);
+      return RegExp(r'^\d{1,2}/\d{4,6}$').hasMatch(registro);
     }
 
-    return RegExp(
-      r'^\d{4,7}$',
-    ).hasMatch(registro);
+    return RegExp(r'^\d{4,7}$').hasMatch(registro);
   }
 
   Future<void> _confirmarCadastro() async {
@@ -71,25 +90,23 @@ class _CadastroProfissionalScreenState
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text(
-            'cadastro concluído!',
-          ),
+          title: const Text('Cadastro concluído!'),
           content: const Text(
-            'seja bem-vindo(a) ao bem-te-ver! '
-            'seu cadastro foi realizado com sucesso.',
+            'Seja bem-vindo(a) ao Bem-te-ver! '
+            'Seu cadastro foi realizado com sucesso.',
           ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context, false);
               },
-              child: const Text('voltar'),
+              child: const Text('Voltar'),
             ),
             FilledButton(
               onPressed: () {
                 Navigator.pop(context, true);
               },
-              child: const Text('continuar'),
+              child: const Text('Continuar'),
             ),
           ],
         );
@@ -109,29 +126,22 @@ class _CadastroProfissionalScreenState
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 520,
-            ),
+            constraints: const BoxConstraints(maxWidth: 520),
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Form(
                 key: _formKey,
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 20),
 
-                    const Icon(
-                      Icons.spa,
-                      size: 60,
-                      color: Color(0xFFD97706),
-                    ),
+                    const Icon(Icons.spa, size: 60, color: Color(0xFFD97706)),
 
                     const SizedBox(height: 16),
 
                     const Text(
-                      'bem-te-ver',
+                      'Bem-te-ver',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 32,
@@ -142,7 +152,7 @@ class _CadastroProfissionalScreenState
                     const SizedBox(height: 8),
 
                     const Text(
-                      'organize seu consultório '
+                      'Organize seu consultório '
                       'em um só lugar',
                       textAlign: TextAlign.center,
                     ),
@@ -150,29 +160,24 @@ class _CadastroProfissionalScreenState
                     const SizedBox(height: 32),
 
                     Text(
-                      'cadastro do profissional',
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineSmall,
+                      'Cadastro do profissional',
+                      style: Theme.of(context).textTheme.headlineSmall,
                     ),
 
                     const SizedBox(height: 20),
 
-                    // nome completo
+                    // Nome completo.
                     TextFormField(
                       key: const Key('campo_nome'),
                       controller: _nomeController,
-                      textCapitalization:
-                          TextCapitalization.words,
+                      textCapitalization: TextCapitalization.words,
                       decoration: const InputDecoration(
-                        labelText: 'nome completo',
-                        prefixIcon:
-                            Icon(Icons.person_outline),
+                        labelText: 'Nome completo',
+                        prefixIcon: Icon(Icons.person_outline),
                       ),
                       validator: (valor) {
-                        if (valor == null ||
-                            valor.trim().length < 3) {
-                          return 'informe seu nome completo';
+                        if (valor == null || valor.trim().length < 3) {
+                          return 'Informe seu nome completo';
                         }
                         return null;
                       },
@@ -180,26 +185,22 @@ class _CadastroProfissionalScreenState
 
                     const SizedBox(height: 16),
 
-                    // e-mail
+                    // E-mail.
                     TextFormField(
                       key: const Key('campo_email'),
                       controller: _emailController,
-                      keyboardType:
-                          TextInputType.emailAddress,
+                      keyboardType: TextInputType.emailAddress,
                       decoration: const InputDecoration(
-                        labelText: 'e-mail',
-                        prefixIcon:
-                            Icon(Icons.email_outlined),
+                        labelText: 'E-mail',
+                        prefixIcon: Icon(Icons.email_outlined),
                       ),
                       validator: (valor) {
                         final email = valor?.trim() ?? '';
 
-                        final formato = RegExp(
-                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                        );
+                        final formato = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
                         if (!formato.hasMatch(email)) {
-                          return 'informe um e-mail válido';
+                          return 'Informe um e-mail válido';
                         }
 
                         return null;
@@ -208,22 +209,19 @@ class _CadastroProfissionalScreenState
 
                     const SizedBox(height: 16),
 
-                    // profissão
+                    // Profissão.
                     DropdownButtonFormField<TipoProfissional>(
                       initialValue: _tipo,
                       decoration: const InputDecoration(
-                        labelText: 'profissão',
-                        prefixIcon:
-                            Icon(Icons.work_outline),
+                        labelText: 'Profissão',
+                        prefixIcon: Icon(Icons.work_outline),
                       ),
-                      items: TipoProfissional.values.map(
-                        (tipo) {
-                          return DropdownMenuItem(
-                            value: tipo,
-                            child: Text(tipo.descricao),
-                          );
-                        },
-                      ).toList(),
+                      items: TipoProfissional.values.map((tipo) {
+                        return DropdownMenuItem(
+                          value: tipo,
+                          child: Text(tipo.descricao),
+                        );
+                      }).toList(),
                       onChanged: (tipo) {
                         if (tipo == null) return;
 
@@ -236,19 +234,15 @@ class _CadastroProfissionalScreenState
 
                     const SizedBox(height: 16),
 
-                    // estado
+                    // Estado do conselho profissional.
                     DropdownButtonFormField<String>(
                       initialValue: _uf,
                       decoration: const InputDecoration(
-                        labelText: 'estado (uf)',
-                        prefixIcon:
-                            Icon(Icons.location_on_outlined),
+                        labelText: 'Estado (UF)',
+                        prefixIcon: Icon(Icons.location_on_outlined),
                       ),
                       items: _ufs.map((uf) {
-                        return DropdownMenuItem(
-                          value: uf,
-                          child: Text(uf),
-                        );
+                        return DropdownMenuItem(value: uf, child: Text(uf));
                       }).toList(),
                       onChanged: (uf) {
                         if (uf == null) return;
@@ -261,33 +255,27 @@ class _CadastroProfissionalScreenState
 
                     const SizedBox(height: 16),
 
-                    // registro profissional
+                    // Registro profissional.
                     TextFormField(
                       key: const Key('campo_registro'),
                       controller: _registroController,
                       keyboardType: TextInputType.text,
                       decoration: InputDecoration(
-                        labelText:
-                            'número do ${_tipo.conselho}',
-                        prefixIcon:
-                            const Icon(Icons.badge_outlined),
-                        hintText: _tipo ==
-                                TipoProfissional.psicologo
+                        labelText: 'Número do ${_tipo.conselho}',
+                        prefixIcon: const Icon(Icons.badge_outlined),
+                        hintText: _tipo == TipoProfissional.psicologo
                             ? '16/12345'
                             : '123456',
                       ),
                       validator: (valor) {
-                        final registro =
-                            valor?.trim() ?? '';
+                        final registro = valor?.trim() ?? '';
 
                         if (registro.isEmpty) {
-                          return 'informe o registro';
+                          return 'Informe o registro';
                         }
 
-                        if (!_formatoRegistroValido(
-                          registro,
-                        )) {
-                          return 'formato de registro inválido';
+                        if (!_formatoRegistroValido(registro)) {
+                          return 'Formato de registro inválido';
                         }
 
                         return null;
@@ -296,19 +284,14 @@ class _CadastroProfissionalScreenState
 
                     const SizedBox(height: 28),
 
-                    // botão de cadastro
+                    // Botão de cadastro.
                     FilledButton.icon(
                       key: const Key('btn_cadastrar'),
                       onPressed: _confirmarCadastro,
-                      icon: const Icon(
-                        Icons.check_circle_outline,
-                      ),
-                      label: const Text(
-                        'concluir cadastro',
-                      ),
+                      icon: const Icon(Icons.check_circle_outline),
+                      label: const Text('Concluir cadastro'),
                       style: FilledButton.styleFrom(
-                        minimumSize:
-                            const Size.fromHeight(52),
+                        minimumSize: const Size.fromHeight(52),
                       ),
                     ),
 

@@ -1,8 +1,9 @@
-
 import 'package:flutter/material.dart';
 
+import 'models/paciente.dart';
 import 'models/profissional.dart';
 import 'screens/cadastro_profissional_screen.dart';
+import 'screens/pacientes_screen.dart';
 
 void main() {
   runApp(const BemTeVerApp());
@@ -18,15 +19,10 @@ class BemTeVerApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFD97706),
-        ),
-        scaffoldBackgroundColor:
-            const Color(0xFFFAF9F6),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFD97706)),
+        scaffoldBackgroundColor: const Color(0xFFFAF9F6),
         inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
       home: const EntradaApp(),
@@ -34,7 +30,7 @@ class BemTeVerApp extends StatelessWidget {
   }
 }
 
-// controla a entrada no aplicativo
+// Controla o cadastro e a entrada do profissional.
 class EntradaApp extends StatefulWidget {
   const EntradaApp({super.key});
 
@@ -57,66 +53,55 @@ class _EntradaAppState extends State<EntradaApp> {
       );
     }
 
-    return TelaPrincipal(
-      profissional: profissionalCadastrado!,
-    );
+    return TelaPrincipal(profissional: profissionalCadastrado!);
   }
 }
 
-// estrutura principal do aplicativo
+// Estrutura principal do aplicativo.
 class TelaPrincipal extends StatefulWidget {
   final Profissional profissional;
 
-  const TelaPrincipal({
-    super.key,
-    required this.profissional,
-  });
+  const TelaPrincipal({super.key, required this.profissional});
 
   @override
-  State<TelaPrincipal> createState() =>
-      _TelaPrincipalState();
+  State<TelaPrincipal> createState() => _TelaPrincipalState();
 }
 
 class _TelaPrincipalState extends State<TelaPrincipal> {
   int paginaAtual = 0;
 
+  // Armazena os pacientes durante a execução.
+  final List<Paciente> _pacientes = [];
+
   final List<String> titulos = [
-    'pacientes',
-    'agenda',
-    'recursos',
-    'consultório',
+    'Pacientes',
+    'Agenda',
+    'Recursos',
+    'Consultório',
   ];
+
+  void _cadastrarPaciente(Paciente paciente) {
+    setState(() {
+      _pacientes.add(paciente);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'bem-te-ver • ${titulos[paginaAtual]}',
-        ),
-      ),
-
+      appBar: AppBar(title: Text('Bem-te-ver • ${titulos[paginaAtual]}')),
       body: IndexedStack(
         index: paginaAtual,
         children: [
-          const Center(
-            child: Text('área de pacientes'),
+          PacientesScreen(
+            pacientes: _pacientes,
+            onCadastrar: _cadastrarPaciente,
           ),
-
-          const Center(
-            child: Text('área de agendamentos'),
-          ),
-
-          const Center(
-            child: Text('recursos terapêuticos'),
-          ),
-
-          ConsultorioScreen(
-            profissional: widget.profissional,
-          ),
+          const Center(child: Text('Área de agendamentos')),
+          const Center(child: Text('Recursos terapêuticos')),
+          ConsultorioScreen(profissional: widget.profissional),
         ],
       ),
-
       bottomNavigationBar: NavigationBar(
         selectedIndex: paginaAtual,
         onDestinationSelected: (indice) {
@@ -128,28 +113,22 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
           NavigationDestination(
             icon: Icon(Icons.people_outline),
             selectedIcon: Icon(Icons.people),
-            label: 'pacientes',
+            label: 'Pacientes',
           ),
-
           NavigationDestination(
-            icon: Icon(
-              Icons.calendar_month_outlined,
-            ),
-            selectedIcon:
-                Icon(Icons.calendar_month),
-            label: 'agenda',
+            icon: Icon(Icons.calendar_month_outlined),
+            selectedIcon: Icon(Icons.calendar_month),
+            label: 'Agenda',
           ),
-
           NavigationDestination(
             icon: Icon(Icons.spa_outlined),
             selectedIcon: Icon(Icons.spa),
-            label: 'recursos',
+            label: 'Recursos',
           ),
-
           NavigationDestination(
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),
-            label: 'consultório',
+            label: 'Consultório',
           ),
         ],
       ),
@@ -157,14 +136,11 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
   }
 }
 
-// tela com os dados do profissional
+// Exibe os dados do profissional cadastrado.
 class ConsultorioScreen extends StatelessWidget {
   final Profissional profissional;
 
-  const ConsultorioScreen({
-    super.key,
-    required this.profissional,
-  });
+  const ConsultorioScreen({super.key, required this.profissional});
 
   @override
   Widget build(BuildContext context) {
@@ -172,59 +148,33 @@ class ConsultorioScreen extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       children: [
         Text(
-          'meu consultório',
-          style: Theme.of(context)
-              .textTheme
-              .headlineSmall,
+          'Meu consultório',
+          style: Theme.of(context).textTheme.headlineSmall,
         ),
-
         const SizedBox(height: 16),
-
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  Icons.account_circle_outlined,
-                  size: 48,
-                ),
-
+                const Icon(Icons.account_circle_outlined, size: 48),
                 const SizedBox(height: 12),
-
                 Text(
                   profissional.nome,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge,
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
-
                 const SizedBox(height: 8),
-
-                Text(
-                  profissional.email,
-                ),
-
+                Text(profissional.email),
                 const SizedBox(height: 8),
-
-                Text(
-                  profissional.tipo.descricao,
-                ),
-
+                Text(profissional.tipo.descricao),
                 const SizedBox(height: 8),
-
                 Text(
                   '${profissional.tipo.conselho}: '
                   '${profissional.registro}',
                 ),
-
                 const SizedBox(height: 8),
-
-                Text(
-                  'uf: ${profissional.uf}',
-                ),
+                Text('UF: ${profissional.uf}'),
               ],
             ),
           ),
