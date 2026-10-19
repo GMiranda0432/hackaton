@@ -1,0 +1,6 @@
+{
+  "name": "Bem-te-ver",
+  "description": "Aplicativo de acolhimento psicológico, prontuários, notas diárias de evolução e avaliações clínicas, inspirado nas cores e no canto do bem-te-vi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,81 @@
+{
+  "entities": {
+    "Patient": {
+      "title": "Patient",
+      "description": "Ficha cadastral e clínica do paciente para atendimento social",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "age": { "type": "integer" },
+        "phone": { "type": "string" },
+        "socialFeeCategory": { "type": "string", "enum": ["GRATUITO", "SIMBOLICO", "SOCIAL_BAIXO", "SOCIAL_PADRAO"] },
+        "initialComplaint": { "type": "string" },
+        "emergencyContact": { "type": "string" },
+        "status": { "type": "string", "enum": ["EM_ATENDIMENTO", "EM_ESPERA", "FINALIZADO"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "firstName", "lastName", "status"]
+    },
+    "SessionNote": {
+      "title": "SessionNote",
+      "description": "Bloco de notas clínico e evolução da sessão",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "patientId": { "type": "string" },
+        "sessionDate": { "type": "string" },
+        "sessionNumber": { "type": "integer" },
+        "observedMood": { "type": "string" },
+        "content": { "type": "string" },
+        "homework": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "patientId", "sessionDate", "content"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "Agendamento de sessão no calendário clínico",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "patientId": { "type": "string" },
+        "patientName": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "durationMinutes": { "type": "integer" },
+        "modality": { "type": "string", "enum": ["PRESENCIAL", "ONLINE", "DOMICILIAR"] },
+        "status": { "type": "string", "enum": ["AGENDADO", "CONFIRMADO", "REALIZADO", "CANCELADO"] },
+        "notes": { "type": "string" },
+        "socialFee": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "patientName", "date", "time", "status"]
+    },
+    "MoodAssessment": {
+      "title": "MoodAssessment",
+      "description": "Registro de avaliação de humor e escalas clínicas (PHQ-9, GAD-7, etc.)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "patientId": { "type": "string" },
+        "patientName": { "type": "string" },
+        "scaleType": { "type": "string", "enum": ["PHQ-9", "GAD-7", "HUMOR_DIARIO"] },
+        "score": { "type": "integer" },
+        "severity": { "type": "string" },
+        "summary": { "type": "string" },
+        "date": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "scaleType", "score", "severity", "date"]
+    }
+  }
+}

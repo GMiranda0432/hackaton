@@ -1,0 +1,18 @@
+{
+  "firestore": [
+    {
+      "database": "ai-studio-android-psicosoc-48aaf9b2-8a6e-45ee-be23-af7a03e904a4",
+      "rules": "firestore.rules"
+    }
+  ],
+  "emulators": {
+    "firestore": {
+      "host": "127.0.0.1",
+      "port": 8085
+    },
+    "auth": {
+      "host": "127.0.0.1",
+      "port": 9099
+    }
+  }
+}
