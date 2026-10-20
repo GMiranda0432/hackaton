@@ -1,0 +1,2 @@
+# Ignora o projeto Android legado nas estatísticas de linguagens
+/app/** linguist-vendored
