@@ -89,7 +89,30 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Bem-te-ver • ${titulos[paginaAtual]}')),
+      appBar: AppBar(
+        title: Row(
+          children: [
+            // Logo oficial no cabeçalho.
+            Image.asset(
+              'assets/images/logo-hackaton.png',
+              width: 44,
+              height: 44,
+              fit: BoxFit.contain,
+              semanticLabel: 'Logo do Bem-te-ver',
+            ),
+
+            const SizedBox(width: 10),
+
+            Expanded(
+              child: Text(
+                'Bem-te-ver • ${titulos[paginaAtual]}',
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+
       body: IndexedStack(
         index: paginaAtual,
         children: [
@@ -97,11 +120,15 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
             pacientes: _pacientes,
             onCadastrar: _cadastrarPaciente,
           ),
+
           const Center(child: Text('Área de agendamentos')),
+
           const Center(child: Text('Recursos terapêuticos')),
+
           ConsultorioScreen(profissional: widget.profissional),
         ],
       ),
+
       bottomNavigationBar: NavigationBar(
         selectedIndex: paginaAtual,
         onDestinationSelected: (indice) {
@@ -151,29 +178,48 @@ class ConsultorioScreen extends StatelessWidget {
           'Meu consultório',
           style: Theme.of(context).textTheme.headlineSmall,
         ),
+
         const SizedBox(height: 16),
+
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.account_circle_outlined, size: 48),
+                // Identidade visual do consultório.
+                Image.asset(
+                  'assets/images/logo-hackaton.png',
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.contain,
+                  semanticLabel: 'Logo do Bem-te-ver',
+                ),
+
                 const SizedBox(height: 12),
+
                 Text(
                   profissional.nome,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
+
                 const SizedBox(height: 8),
+
                 Text(profissional.email),
+
                 const SizedBox(height: 8),
+
                 Text(profissional.tipo.descricao),
+
                 const SizedBox(height: 8),
+
                 Text(
                   '${profissional.tipo.conselho}: '
                   '${profissional.registro}',
                 ),
+
                 const SizedBox(height: 8),
+
                 Text('UF: ${profissional.uf}'),
               ],
             ),

@@ -136,7 +136,17 @@ class _CadastroProfissionalScreenState
                   children: [
                     const SizedBox(height: 20),
 
-                    const Icon(Icons.spa, size: 60, color: Color(0xFFD97706)),
+                    // Logo oficial do Bem-te-ver.
+                    Center(
+                      child: Image.asset(
+                        'assets/images/logo-hackaton.png',
+                        key: const Key('logo_cadastro'),
+                        width: 160,
+                        height: 120,
+                        fit: BoxFit.contain,
+                        semanticLabel: 'Logo do Bem-te-ver',
+                      ),
+                    ),
 
                     const SizedBox(height: 16),
 
