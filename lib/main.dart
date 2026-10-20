@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+import 'models/agendamento.dart';
 import 'models/paciente.dart';
 import 'models/profissional.dart';
+
+import 'screens/agenda_screen.dart';
 import 'screens/cadastro_profissional_screen.dart';
 import 'screens/pacientes_screen.dart';
 
@@ -30,7 +33,6 @@ class BemTeVerApp extends StatelessWidget {
   }
 }
 
-// Controla o cadastro e a entrada do profissional.
 class EntradaApp extends StatefulWidget {
   const EntradaApp({super.key});
 
@@ -57,7 +59,6 @@ class _EntradaAppState extends State<EntradaApp> {
   }
 }
 
-// Estrutura principal do aplicativo.
 class TelaPrincipal extends StatefulWidget {
   final Profissional profissional;
 
@@ -70,8 +71,8 @@ class TelaPrincipal extends StatefulWidget {
 class _TelaPrincipalState extends State<TelaPrincipal> {
   int paginaAtual = 0;
 
-  // Armazena os pacientes durante a execução.
   final List<Paciente> _pacientes = [];
+  final List<Agendamento> _agendamentos = [];
 
   final List<String> titulos = [
     'Pacientes',
@@ -86,13 +87,32 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
     });
   }
 
+  void _salvarAgendamento(Agendamento agendamento) {
+    setState(() {
+      final indice = _agendamentos.indexWhere(
+        (item) => item.id == agendamento.id,
+      );
+
+      if (indice == -1) {
+        _agendamentos.add(agendamento);
+      } else {
+        _agendamentos[indice] = agendamento;
+      }
+    });
+  }
+
+  void _excluirAgendamento(String id) {
+    setState(() {
+      _agendamentos.removeWhere((agendamento) => agendamento.id == id);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Row(
           children: [
-            // Logo oficial no cabeçalho.
             Image.asset(
               'assets/images/logo-hackaton.png',
               width: 44,
@@ -116,15 +136,24 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
       body: IndexedStack(
         index: paginaAtual,
         children: [
+          // Cadastro e pesquisa de pacientes.
           PacientesScreen(
             pacientes: _pacientes,
             onCadastrar: _cadastrarPaciente,
           ),
 
-          const Center(child: Text('Área de agendamentos')),
+          // Agenda funcional.
+          AgendaScreen(
+            pacientes: _pacientes,
+            agendamentos: _agendamentos,
+            onSalvar: _salvarAgendamento,
+            onExcluir: _excluirAgendamento,
+          ),
 
+          // Área de recursos.
           const Center(child: Text('Recursos terapêuticos')),
 
+          // Dados do profissional.
           ConsultorioScreen(profissional: widget.profissional),
         ],
       ),
@@ -163,7 +192,6 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
   }
 }
 
-// Exibe os dados do profissional cadastrado.
 class ConsultorioScreen extends StatelessWidget {
   final Profissional profissional;
 
@@ -187,7 +215,6 @@ class ConsultorioScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Identidade visual do consultório.
                 Image.asset(
                   'assets/images/logo-hackaton.png',
                   width: 100,
