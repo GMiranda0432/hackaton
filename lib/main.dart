@@ -58,7 +58,14 @@ class _EntradaAppState extends State<EntradaApp> {
 
   // Recupera o profissional salvo localmente, se existir.
   Future<void> _carregarProfissional() async {
-    final profissional = await _armazenamento.carregarProfissional();
+    Profissional? profissional;
+
+    try {
+      profissional = await _armazenamento.carregarProfissional();
+    } catch (_) {
+      // Falha ao ler o armazenamento: segue para o cadastro em vez de travar.
+      profissional = null;
+    }
 
     if (!mounted) return;
 
@@ -131,8 +138,17 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
 
   // Recupera pacientes e agendamentos salvos localmente.
   Future<void> _carregarDados() async {
-    final pacientes = await _armazenamento.carregarPacientes();
-    final agendamentos = await _armazenamento.carregarAgendamentos();
+    var pacientes = <Paciente>[];
+    var agendamentos = <Agendamento>[];
+
+    try {
+      pacientes = await _armazenamento.carregarPacientes();
+      agendamentos = await _armazenamento.carregarAgendamentos();
+    } catch (_) {
+      // Falha ao ler o armazenamento: abre o app vazio em vez de travar.
+      pacientes = [];
+      agendamentos = [];
+    }
 
     if (!mounted) return;
 

@@ -25,7 +25,15 @@ class ArmazenamentoLocal {
       return null;
     }
 
-    return Profissional.fromJson(jsonDecode(conteudo) as Map<String, dynamic>);
+    try {
+      return Profissional.fromJson(
+        jsonDecode(conteudo) as Map<String, dynamic>,
+      );
+    } catch (_) {
+      // Dados antigos ou corrompidos: descarta para não travar a abertura.
+      await prefs.remove(_chaveProfissional);
+      return null;
+    }
   }
 
   Future<void> salvarProfissional(Profissional profissional) async {
@@ -45,10 +53,16 @@ class ArmazenamentoLocal {
       return [];
     }
 
-    final lista = jsonDecode(conteudo) as List<dynamic>;
-    return lista
-        .map((item) => Paciente.fromJson(item as Map<String, dynamic>))
-        .toList();
+    try {
+      final lista = jsonDecode(conteudo) as List<dynamic>;
+      return lista
+          .map((item) => Paciente.fromJson(item as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      // Dados antigos ou corrompidos: descarta para não travar a abertura.
+      await prefs.remove(_chavePacientes);
+      return [];
+    }
   }
 
   Future<void> salvarPacientes(List<Paciente> pacientes) async {
@@ -68,10 +82,16 @@ class ArmazenamentoLocal {
       return [];
     }
 
-    final lista = jsonDecode(conteudo) as List<dynamic>;
-    return lista
-        .map((item) => Agendamento.fromJson(item as Map<String, dynamic>))
-        .toList();
+    try {
+      final lista = jsonDecode(conteudo) as List<dynamic>;
+      return lista
+          .map((item) => Agendamento.fromJson(item as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      // Dados antigos ou corrompidos: descarta para não travar a abertura.
+      await prefs.remove(_chaveAgendamentos);
+      return [];
+    }
   }
 
   Future<void> salvarAgendamentos(List<Agendamento> agendamentos) async {
