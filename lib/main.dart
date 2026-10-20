@@ -48,7 +48,6 @@ class _EntradaAppState extends State<EntradaApp> {
   final ArmazenamentoLocal _armazenamento = ArmazenamentoLocal();
 
   Profissional? profissionalCadastrado;
-  bool _carregando = true;
 
   @override
   void initState() {
@@ -67,11 +66,10 @@ class _EntradaAppState extends State<EntradaApp> {
       profissional = null;
     }
 
-    if (!mounted) return;
+    if (!mounted || profissional == null) return;
 
     setState(() {
       profissionalCadastrado = profissional;
-      _carregando = false;
     });
   }
 
@@ -97,12 +95,6 @@ class _EntradaAppState extends State<EntradaApp> {
 
   @override
   Widget build(BuildContext context) {
-    if (_carregando) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
     if (profissionalCadastrado == null) {
       return CadastroProfissionalScreen(
         onCadastroConcluido: _concluirCadastro,
@@ -129,8 +121,6 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
 
   final List<Paciente> _pacientes = [];
   final List<Agendamento> _agendamentos = [];
-
-  bool _carregando = true;
 
   final List<String> titulos = [
     'Pacientes',
@@ -161,6 +151,9 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
 
     if (!mounted) return;
 
+    // Se o usuário já cadastrou algo antes da leitura terminar, não sobrescreve.
+    if (_pacientes.isNotEmpty || _agendamentos.isNotEmpty) return;
+
     setState(() {
       _pacientes
         ..clear()
@@ -168,7 +161,6 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
       _agendamentos
         ..clear()
         ..addAll(agendamentos);
-      _carregando = false;
     });
   }
 
@@ -287,31 +279,29 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
         ),
       ),
 
-      body: _carregando
-          ? const Center(child: CircularProgressIndicator())
-          : IndexedStack(
-              index: paginaAtual,
-              children: [
-                PacientesScreen(
-                  pacientes: _pacientes,
-                  onCadastrar: _cadastrarPaciente,
-                  onEditar: _editarPaciente,
-                  onExcluir: _excluirPaciente,
-                  possuiAgendamentos: _possuiAgendamentos,
-                ),
+      body: IndexedStack(
+        index: paginaAtual,
+        children: [
+          PacientesScreen(
+            pacientes: _pacientes,
+            onCadastrar: _cadastrarPaciente,
+            onEditar: _editarPaciente,
+            onExcluir: _excluirPaciente,
+            possuiAgendamentos: _possuiAgendamentos,
+          ),
 
-                AgendaScreen(
-                  pacientes: _pacientes,
-                  agendamentos: _agendamentos,
-                  onSalvar: _salvarAgendamento,
-                  onExcluir: _excluirAgendamento,
-                ),
+          AgendaScreen(
+            pacientes: _pacientes,
+            agendamentos: _agendamentos,
+            onSalvar: _salvarAgendamento,
+            onExcluir: _excluirAgendamento,
+          ),
 
-                const RecursosScreen(),
+          const RecursosScreen(),
 
-                ConsultorioScreen(profissional: widget.profissional),
-              ],
-            ),
+          ConsultorioScreen(profissional: widget.profissional),
+        ],
+      ),
 
       bottomNavigationBar: NavigationBar(
         selectedIndex: paginaAtual,

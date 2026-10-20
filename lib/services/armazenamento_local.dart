@@ -1,16 +1,19 @@
 import 'dart:convert';
 
-import 'package:shared_preferences/shared_preferences.dart';
-
 import '../models/agendamento.dart';
 import '../models/paciente.dart';
 import '../models/profissional.dart';
 
+// Backend por plataforma: arquivos JSON no aparelho (Android/iOS/desktop) ou
+// armazenamento local do navegador (web).
+import 'armazenamento_local_io.dart'
+    if (dart.library.html) 'armazenamento_local_web.dart';
+
 /// Persistência local dos dados do consultório.
 ///
-/// Grava o profissional (usuário), os pacientes e os agendamentos como JSON
-/// no armazenamento do dispositivo, para que continuem disponíveis ao fechar
-/// e reabrir o app.
+/// Grava o profissional (usuário), os pacientes e os agendamentos como JSON,
+/// para que continuem disponíveis ao fechar e reabrir o app. Nenhuma operação
+/// trava a interface: falhas de leitura/gravação são ignoradas.
 class ArmazenamentoLocal {
   static const String _chaveProfissional = 'profissional';
   static const String _chavePacientes = 'pacientes';
@@ -18,10 +21,9 @@ class ArmazenamentoLocal {
 
   // Usuário (profissional cadastrado).
   Future<Profissional?> carregarProfissional() async {
-    final prefs = await SharedPreferences.getInstance();
-    final conteudo = prefs.getString(_chaveProfissional);
+    final conteudo = await lerArquivoJson(_chaveProfissional);
 
-    if (conteudo == null) {
+    if (conteudo == null || conteudo.trim().isEmpty) {
       return null;
     }
 
@@ -30,15 +32,13 @@ class ArmazenamentoLocal {
         jsonDecode(conteudo) as Map<String, dynamic>,
       );
     } catch (_) {
-      // Dados antigos ou corrompidos: descarta para não travar a abertura.
-      await prefs.remove(_chaveProfissional);
+      // Dados antigos ou corrompidos: ignora para não travar a abertura.
       return null;
     }
   }
 
-  Future<void> salvarProfissional(Profissional profissional) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
+  Future<void> salvarProfissional(Profissional profissional) {
+    return gravarArquivoJson(
       _chaveProfissional,
       jsonEncode(profissional.toJson()),
     );
@@ -46,59 +46,57 @@ class ArmazenamentoLocal {
 
   // Pacientes (clientes) cadastrados.
   Future<List<Paciente>> carregarPacientes() async {
-    final prefs = await SharedPreferences.getInstance();
-    final conteudo = prefs.getString(_chavePacientes);
+    final conteudo = await lerArquivoJson(_chavePacientes);
 
-    if (conteudo == null) {
+    if (conteudo == null || conteudo.trim().isEmpty) {
       return [];
     }
 
     try {
       final lista = jsonDecode(conteudo) as List<dynamic>;
       return lista
-          .map((item) => Paciente.fromJson(item as Map<String, dynamic>))
+          .whereType<Map>()
+          .map((item) => Paciente.fromJson(Map<String, dynamic>.from(item)))
           .toList();
     } catch (_) {
-      // Dados antigos ou corrompidos: descarta para não travar a abertura.
-      await prefs.remove(_chavePacientes);
+      // Dados antigos ou corrompidos: ignora para não travar a abertura.
       return [];
     }
   }
 
-  Future<void> salvarPacientes(List<Paciente> pacientes) async {
-    final prefs = await SharedPreferences.getInstance();
-    final conteudo = jsonEncode(
-      pacientes.map((paciente) => paciente.toJson()).toList(),
+  Future<void> salvarPacientes(List<Paciente> pacientes) {
+    return gravarArquivoJson(
+      _chavePacientes,
+      jsonEncode(pacientes.map((paciente) => paciente.toJson()).toList()),
     );
-    await prefs.setString(_chavePacientes, conteudo);
   }
 
   // Agendamentos da agenda.
   Future<List<Agendamento>> carregarAgendamentos() async {
-    final prefs = await SharedPreferences.getInstance();
-    final conteudo = prefs.getString(_chaveAgendamentos);
+    final conteudo = await lerArquivoJson(_chaveAgendamentos);
 
-    if (conteudo == null) {
+    if (conteudo == null || conteudo.trim().isEmpty) {
       return [];
     }
 
     try {
       final lista = jsonDecode(conteudo) as List<dynamic>;
       return lista
-          .map((item) => Agendamento.fromJson(item as Map<String, dynamic>))
+          .whereType<Map>()
+          .map((item) => Agendamento.fromJson(Map<String, dynamic>.from(item)))
           .toList();
     } catch (_) {
-      // Dados antigos ou corrompidos: descarta para não travar a abertura.
-      await prefs.remove(_chaveAgendamentos);
+      // Dados antigos ou corrompidos: ignora para não travar a abertura.
       return [];
     }
   }
 
-  Future<void> salvarAgendamentos(List<Agendamento> agendamentos) async {
-    final prefs = await SharedPreferences.getInstance();
-    final conteudo = jsonEncode(
-      agendamentos.map((agendamento) => agendamento.toJson()).toList(),
+  Future<void> salvarAgendamentos(List<Agendamento> agendamentos) {
+    return gravarArquivoJson(
+      _chaveAgendamentos,
+      jsonEncode(
+        agendamentos.map((agendamento) => agendamento.toJson()).toList(),
+      ),
     );
-    await prefs.setString(_chaveAgendamentos, conteudo);
   }
 }
