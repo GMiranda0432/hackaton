@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/paciente.dart';
 
-class PacientesScreen extends StatelessWidget {
+class PacientesScreen extends StatefulWidget {
   final List<Paciente> pacientes;
   final ValueChanged<Paciente> onCadastrar;
 
@@ -11,6 +11,72 @@ class PacientesScreen extends StatelessWidget {
     required this.pacientes,
     required this.onCadastrar,
   });
+
+  @override
+  State<PacientesScreen> createState() => _PacientesScreenState();
+}
+
+class _PacientesScreenState extends State<PacientesScreen> {
+  final _pesquisaController = TextEditingController();
+
+  String _pesquisa = '';
+  StatusPaciente? _filtroStatus;
+
+  @override
+  void dispose() {
+    _pesquisaController.dispose();
+    super.dispose();
+  }
+
+  // Padroniza o texto para facilitar a pesquisa.
+  String _normalizar(String texto) {
+    return texto
+        .toLowerCase()
+        .replaceAll(RegExp(r'[áàâãä]'), 'a')
+        .replaceAll(RegExp(r'[éèêë]'), 'e')
+        .replaceAll(RegExp(r'[íìîï]'), 'i')
+        .replaceAll(RegExp(r'[óòôõö]'), 'o')
+        .replaceAll(RegExp(r'[úùûü]'), 'u')
+        .replaceAll('ç', 'c');
+  }
+
+  List<Paciente> get _pacientesFiltrados {
+    final pesquisaNormalizada = _normalizar(_pesquisa.trim());
+
+    final resultados = widget.pacientes.where((paciente) {
+      final nomeNormalizado = _normalizar(paciente.nome);
+
+      final correspondeNome = nomeNormalizado.contains(pesquisaNormalizada);
+
+      final correspondeStatus =
+          _filtroStatus == null || paciente.status == _filtroStatus;
+
+      return correspondeNome && correspondeStatus;
+    }).toList();
+
+    resultados.sort(
+      (a, b) => _normalizar(a.nome).compareTo(_normalizar(b.nome)),
+    );
+
+    return resultados;
+  }
+
+  void _limparPesquisa() {
+    _pesquisaController.clear();
+
+    setState(() {
+      _pesquisa = '';
+    });
+  }
+
+  void _limparFiltros() {
+    _pesquisaController.clear();
+
+    setState(() {
+      _pesquisa = '';
+      _filtroStatus = null;
+    });
+  }
 
   Future<void> _abrirCadastro(BuildContext context) async {
     final paciente = await showModalBottomSheet<Paciente>(
@@ -26,22 +92,37 @@ class PacientesScreen extends StatelessWidget {
       return;
     }
 
-    onCadastrar(paciente);
+    widget.onCadastrar(paciente);
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Paciente cadastrado com sucesso!')),
     );
   }
 
+  Widget _criarFiltro({
+    required String titulo,
+    required StatusPaciente? status,
+    required String identificador,
+  }) {
+    return ChoiceChip(
+      key: Key(identificador),
+      label: Text(titulo),
+      selected: _filtroStatus == status,
+      onSelected: (_) {
+        setState(() {
+          _filtroStatus = status;
+        });
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final pacientesOrdenados = [...pacientes]
-      ..sort((a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()));
+    final pacientesFiltrados = _pacientesFiltrados;
 
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: ListView(
         children: [
           Row(
             children: [
@@ -51,7 +132,7 @@ class PacientesScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
               ),
-              Chip(label: Text('${pacientes.length}')),
+              Chip(label: Text('${widget.pacientes.length}')),
             ],
           ),
 
@@ -64,6 +145,80 @@ class PacientesScreen extends StatelessWidget {
 
           const SizedBox(height: 20),
 
+          // Campo de pesquisa.
+          TextField(
+            key: const Key('campo_pesquisa_paciente'),
+            controller: _pesquisaController,
+            onChanged: (valor) {
+              setState(() {
+                _pesquisa = valor;
+              });
+            },
+            decoration: InputDecoration(
+              labelText: 'Pesquisar pacientes',
+              hintText: 'Digite o nome do paciente',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _pesquisa.isNotEmpty
+                  ? IconButton(
+                      key: const Key('btn_limpar_pesquisa'),
+                      tooltip: 'Limpar pesquisa',
+                      onPressed: _limparPesquisa,
+                      icon: const Icon(Icons.close),
+                    )
+                  : null,
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          Text(
+            'Filtrar por situação',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+
+          const SizedBox(height: 8),
+
+          // Filtros com rolagem horizontal.
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _criarFiltro(
+                  titulo: 'Todos',
+                  status: null,
+                  identificador: 'filtro_todos',
+                ),
+
+                const SizedBox(width: 8),
+
+                _criarFiltro(
+                  titulo: 'Em atendimento',
+                  status: StatusPaciente.emAtendimento,
+                  identificador: 'filtro_em_atendimento',
+                ),
+
+                const SizedBox(width: 8),
+
+                _criarFiltro(
+                  titulo: 'Fila de espera',
+                  status: StatusPaciente.emEspera,
+                  identificador: 'filtro_em_espera',
+                ),
+
+                const SizedBox(width: 8),
+
+                _criarFiltro(
+                  titulo: 'Concluído',
+                  status: StatusPaciente.concluido,
+                  identificador: 'filtro_concluido',
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Botão de cadastro existente.
           FilledButton.icon(
             key: const Key('btn_novo_paciente'),
             onPressed: () => _abrirCadastro(context),
@@ -76,22 +231,35 @@ class PacientesScreen extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          Expanded(
-            child: pacientesOrdenados.isEmpty
-                ? const _ListaVazia()
-                : ListView.builder(
-                    itemCount: pacientesOrdenados.length,
-                    itemBuilder: (context, index) {
-                      return _CardPaciente(paciente: pacientesOrdenados[index]);
-                    },
-                  ),
-          ),
+          // Contador de resultados.
+          if (widget.pacientes.isNotEmpty) ...[
+            Text(
+              '${pacientesFiltrados.length} '
+              '${pacientesFiltrados.length == 1 ? 'resultado' : 'resultados'}',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          // Resultado da pesquisa.
+          if (pacientesFiltrados.isEmpty)
+            SizedBox(
+              height: 250,
+              child: widget.pacientes.isEmpty
+                  ? const _ListaVazia()
+                  : _SemResultados(onLimparFiltros: _limparFiltros),
+            )
+          else
+            ...pacientesFiltrados.map(
+              (paciente) => _CardPaciente(paciente: paciente),
+            ),
         ],
       ),
     );
   }
 }
 
+// Mensagem exibida quando ainda não existem pacientes.
 class _ListaVazia extends StatelessWidget {
   const _ListaVazia();
 
@@ -127,6 +295,54 @@ class _ListaVazia extends StatelessWidget {
   }
 }
 
+// Mensagem exibida quando os filtros não encontram pacientes.
+class _SemResultados extends StatelessWidget {
+  final VoidCallback onLimparFiltros;
+
+  const _SemResultados({required this.onLimparFiltros});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.search_off,
+            size: 64,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+
+          const SizedBox(height: 16),
+
+          Text(
+            'Nenhum paciente encontrado',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+
+          const SizedBox(height: 8),
+
+          const Text(
+            'Tente outro nome ou altere o filtro.',
+            textAlign: TextAlign.center,
+          ),
+
+          const SizedBox(height: 16),
+
+          OutlinedButton.icon(
+            key: const Key('btn_limpar_filtros'),
+            onPressed: onLimparFiltros,
+            icon: const Icon(Icons.filter_alt_off),
+            label: const Text('Limpar filtros'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Card com os dados resumidos de cada paciente.
 class _CardPaciente extends StatelessWidget {
   final Paciente paciente;
 
@@ -175,6 +391,7 @@ class _CardPaciente extends StatelessWidget {
   }
 }
 
+// Formulário de cadastro de pacientes.
 class FormularioPaciente extends StatefulWidget {
   const FormularioPaciente({super.key});
 
@@ -238,7 +455,6 @@ class _FormularioPacienteState extends State<FormularioPaciente> {
 
               const SizedBox(height: 24),
 
-              // Nome completo.
               TextFormField(
                 key: const Key('campo_paciente_nome'),
                 controller: _nomeController,
@@ -251,13 +467,13 @@ class _FormularioPacienteState extends State<FormularioPaciente> {
                   if (valor == null || valor.trim().length < 3) {
                     return 'Informe o nome do paciente';
                   }
+
                   return null;
                 },
               ),
 
               const SizedBox(height: 16),
 
-              // Idade.
               TextFormField(
                 key: const Key('campo_paciente_idade'),
                 controller: _idadeController,
@@ -279,7 +495,6 @@ class _FormularioPacienteState extends State<FormularioPaciente> {
 
               const SizedBox(height: 16),
 
-              // Telefone.
               TextFormField(
                 key: const Key('campo_paciente_telefone'),
                 controller: _telefoneController,
@@ -308,7 +523,6 @@ class _FormularioPacienteState extends State<FormularioPaciente> {
 
               const SizedBox(height: 16),
 
-              // Situação do paciente.
               DropdownButtonFormField<StatusPaciente>(
                 initialValue: _status,
                 decoration: const InputDecoration(
