@@ -92,7 +92,7 @@ class _CadastroProfissionalScreenState
         return AlertDialog(
           title: const Text('Cadastro concluído!'),
           content: const Text(
-            'Seja bem-vindo(a) ao Bem-te-ver! '
+            'Seja bem-vindo(a) ao Bem-te-Ver! '
             'Seu cadastro foi realizado com sucesso.',
           ),
           actions: [
@@ -136,7 +136,7 @@ class _CadastroProfissionalScreenState
                   children: [
                     const SizedBox(height: 20),
 
-                    // Logo oficial do Bem-te-ver.
+                    // Logo oficial do Bem-te-Ver.
                     Center(
                       child: Image.asset(
                         'assets/images/logo-hackaton.png',
@@ -144,14 +144,14 @@ class _CadastroProfissionalScreenState
                         width: 160,
                         height: 120,
                         fit: BoxFit.contain,
-                        semanticLabel: 'Logo do Bem-te-ver',
+                        semanticLabel: 'Logo do Bem-te-Ver',
                       ),
                     ),
 
                     const SizedBox(height: 16),
 
                     const Text(
-                      'Bem-te-ver',
+                      'Bem-te-Ver',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 32,

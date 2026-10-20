@@ -13,6 +13,28 @@ class Agendamento {
     required this.valorHora,
   });
 
+  // Converte o agendamento para JSON, permitindo salvar localmente.
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'pacienteId': pacienteId,
+      'inicio': inicio.toIso8601String(),
+      'fim': fim.toIso8601String(),
+      'valorHora': valorHora,
+    };
+  }
+
+  // Reconstrói o agendamento a partir do JSON salvo.
+  factory Agendamento.fromJson(Map<String, dynamic> json) {
+    return Agendamento(
+      id: json['id'] as String,
+      pacienteId: json['pacienteId'] as String,
+      inicio: DateTime.parse(json['inicio'] as String),
+      fim: DateTime.parse(json['fim'] as String),
+      valorHora: (json['valorHora'] as num).toDouble(),
+    );
+  }
+
   Duration get duracao => fim.difference(inicio);
 
   double get valorTotal {

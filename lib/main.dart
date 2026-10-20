@@ -9,7 +9,10 @@ import 'screens/cadastro_profissional_screen.dart';
 import 'screens/pacientes_screen.dart';
 import 'screens/recursos_screen.dart';
 
+import 'services/armazenamento_local.dart';
+
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const BemTeVerApp());
 }
 
@@ -19,7 +22,7 @@ class BemTeVerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Bem-te-ver',
+      title: 'Bem-te-Ver',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -42,17 +45,51 @@ class EntradaApp extends StatefulWidget {
 }
 
 class _EntradaAppState extends State<EntradaApp> {
+  final ArmazenamentoLocal _armazenamento = ArmazenamentoLocal();
+
   Profissional? profissionalCadastrado;
+  bool _carregando = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarProfissional();
+  }
+
+  // Recupera o profissional salvo localmente, se existir.
+  Future<void> _carregarProfissional() async {
+    final profissional = await _armazenamento.carregarProfissional();
+
+    if (!mounted) return;
+
+    setState(() {
+      profissionalCadastrado = profissional;
+      _carregando = false;
+    });
+  }
+
+  // Salva o profissional cadastrado e entra no consultório.
+  Future<void> _concluirCadastro(Profissional profissional) async {
+    await _armazenamento.salvarProfissional(profissional);
+
+    if (!mounted) return;
+
+    setState(() {
+      profissionalCadastrado = profissional;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_carregando) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     if (profissionalCadastrado == null) {
       return CadastroProfissionalScreen(
-        onCadastroConcluido: (profissional) {
-          setState(() {
-            profissionalCadastrado = profissional;
-          });
-        },
+        onCadastroConcluido: _concluirCadastro,
       );
     }
 
@@ -70,10 +107,14 @@ class TelaPrincipal extends StatefulWidget {
 }
 
 class _TelaPrincipalState extends State<TelaPrincipal> {
+  final ArmazenamentoLocal _armazenamento = ArmazenamentoLocal();
+
   int paginaAtual = 0;
 
   final List<Paciente> _pacientes = [];
   final List<Agendamento> _agendamentos = [];
+
+  bool _carregando = true;
 
   final List<String> titulos = [
     'Pacientes',
@@ -82,11 +123,46 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
     'Consultório',
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _carregarDados();
+  }
+
+  // Recupera pacientes e agendamentos salvos localmente.
+  Future<void> _carregarDados() async {
+    final pacientes = await _armazenamento.carregarPacientes();
+    final agendamentos = await _armazenamento.carregarAgendamentos();
+
+    if (!mounted) return;
+
+    setState(() {
+      _pacientes
+        ..clear()
+        ..addAll(pacientes);
+      _agendamentos
+        ..clear()
+        ..addAll(agendamentos);
+      _carregando = false;
+    });
+  }
+
+  // Grava a lista de pacientes no armazenamento local.
+  void _persistirPacientes() {
+    _armazenamento.salvarPacientes(_pacientes);
+  }
+
+  // Grava a lista de agendamentos no armazenamento local.
+  void _persistirAgendamentos() {
+    _armazenamento.salvarAgendamentos(_agendamentos);
+  }
+
   // Cadastra um novo paciente.
   void _cadastrarPaciente(Paciente paciente) {
     setState(() {
       _pacientes.add(paciente);
     });
+    _persistirPacientes();
   }
 
   // Atualiza um paciente existente, preservando seu ID.
@@ -102,6 +178,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
     setState(() {
       _pacientes[indice] = atualizado;
     });
+    _persistirPacientes();
   }
 
   // Verifica se o paciente possui consultas vinculadas.
@@ -124,6 +201,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
     setState(() {
       _pacientes.removeWhere((paciente) => paciente.id == pacienteId);
     });
+    _persistirPacientes();
 
     return true;
   }
@@ -141,6 +219,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
         _agendamentos[indice] = agendamento;
       }
     });
+    _persistirAgendamentos();
   }
 
   // Cancela um agendamento pelo ID.
@@ -148,6 +227,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
     setState(() {
       _agendamentos.removeWhere((agendamento) => agendamento.id == id);
     });
+    _persistirAgendamentos();
   }
 
   @override
@@ -161,12 +241,12 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
               width: 44,
               height: 44,
               fit: BoxFit.contain,
-              semanticLabel: 'Logo do Bem-te-ver',
+              semanticLabel: 'Logo do Bem-te-Ver',
             ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Bem-te-ver • ${titulos[paginaAtual]}',
+                'Bem-te-Ver • ${titulos[paginaAtual]}',
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -174,29 +254,31 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
         ),
       ),
 
-      body: IndexedStack(
-        index: paginaAtual,
-        children: [
-          PacientesScreen(
-            pacientes: _pacientes,
-            onCadastrar: _cadastrarPaciente,
-            onEditar: _editarPaciente,
-            onExcluir: _excluirPaciente,
-            possuiAgendamentos: _possuiAgendamentos,
-          ),
+      body: _carregando
+          ? const Center(child: CircularProgressIndicator())
+          : IndexedStack(
+              index: paginaAtual,
+              children: [
+                PacientesScreen(
+                  pacientes: _pacientes,
+                  onCadastrar: _cadastrarPaciente,
+                  onEditar: _editarPaciente,
+                  onExcluir: _excluirPaciente,
+                  possuiAgendamentos: _possuiAgendamentos,
+                ),
 
-          AgendaScreen(
-            pacientes: _pacientes,
-            agendamentos: _agendamentos,
-            onSalvar: _salvarAgendamento,
-            onExcluir: _excluirAgendamento,
-          ),
+                AgendaScreen(
+                  pacientes: _pacientes,
+                  agendamentos: _agendamentos,
+                  onSalvar: _salvarAgendamento,
+                  onExcluir: _excluirAgendamento,
+                ),
 
-          const RecursosScreen(),
+                const RecursosScreen(),
 
-          ConsultorioScreen(profissional: widget.profissional),
-        ],
-      ),
+                ConsultorioScreen(profissional: widget.profissional),
+              ],
+            ),
 
       bottomNavigationBar: NavigationBar(
         selectedIndex: paginaAtual,
@@ -258,7 +340,7 @@ class ConsultorioScreen extends StatelessWidget {
                   width: 100,
                   height: 100,
                   fit: BoxFit.contain,
-                  semanticLabel: 'Logo do Bem-te-ver',
+                  semanticLabel: 'Logo do Bem-te-Ver',
                 ),
                 const SizedBox(height: 12),
                 Text(
