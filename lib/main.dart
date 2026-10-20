@@ -76,14 +76,23 @@ class _EntradaAppState extends State<EntradaApp> {
   }
 
   // Salva o profissional cadastrado e entra no consultório.
-  Future<void> _concluirCadastro(Profissional profissional) async {
-    await _armazenamento.salvarProfissional(profissional);
-
-    if (!mounted) return;
-
+  void _concluirCadastro(Profissional profissional) {
+    // Entra no consultório imediatamente, sem depender da gravação.
     setState(() {
       profissionalCadastrado = profissional;
     });
+
+    // A gravação acontece em segundo plano; uma falha não trava a navegação.
+    _persistirProfissional(profissional);
+  }
+
+  // Grava o profissional no armazenamento local.
+  Future<void> _persistirProfissional(Profissional profissional) async {
+    try {
+      await _armazenamento.salvarProfissional(profissional);
+    } catch (_) {
+      // Falha de gravação não deve interromper o uso do app.
+    }
   }
 
   @override
@@ -164,13 +173,21 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
   }
 
   // Grava a lista de pacientes no armazenamento local.
-  void _persistirPacientes() {
-    _armazenamento.salvarPacientes(_pacientes);
+  Future<void> _persistirPacientes() async {
+    try {
+      await _armazenamento.salvarPacientes(_pacientes);
+    } catch (_) {
+      // Falha de gravação não deve interromper o uso do app.
+    }
   }
 
   // Grava a lista de agendamentos no armazenamento local.
-  void _persistirAgendamentos() {
-    _armazenamento.salvarAgendamentos(_agendamentos);
+  Future<void> _persistirAgendamentos() async {
+    try {
+      await _armazenamento.salvarAgendamentos(_agendamentos);
+    } catch (_) {
+      // Falha de gravação não deve interromper o uso do app.
+    }
   }
 
   // Cadastra um novo paciente.
