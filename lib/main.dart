@@ -33,7 +33,6 @@ class BemTeVerApp extends StatelessWidget {
   }
 }
 
-// Controla o cadastro e a entrada do profissional.
 class EntradaApp extends StatefulWidget {
   const EntradaApp({super.key});
 
@@ -60,7 +59,6 @@ class _EntradaAppState extends State<EntradaApp> {
   }
 }
 
-// Estrutura principal do aplicativo.
 class TelaPrincipal extends StatefulWidget {
   final Profissional profissional;
 
@@ -105,6 +103,30 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
     });
   }
 
+  // Verifica se o paciente possui consultas vinculadas.
+  bool _possuiAgendamentos(String pacienteId) {
+    return _agendamentos.any(
+      (agendamento) => agendamento.pacienteId == pacienteId,
+    );
+  }
+
+  // Exclui somente pacientes existentes sem agendamentos.
+  bool _excluirPaciente(String pacienteId) {
+    final existePaciente = _pacientes.any(
+      (paciente) => paciente.id == pacienteId,
+    );
+
+    if (!existePaciente || _possuiAgendamentos(pacienteId)) {
+      return false;
+    }
+
+    setState(() {
+      _pacientes.removeWhere((paciente) => paciente.id == pacienteId);
+    });
+
+    return true;
+  }
+
   // Adiciona ou atualiza um agendamento.
   void _salvarAgendamento(Agendamento agendamento) {
     setState(() {
@@ -120,7 +142,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
     });
   }
 
-  // Remove um agendamento pelo ID.
+  // Cancela um agendamento pelo ID.
   void _excluirAgendamento(String id) {
     setState(() {
       _agendamentos.removeWhere((agendamento) => agendamento.id == id);
@@ -140,9 +162,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
               fit: BoxFit.contain,
               semanticLabel: 'Logo do Bem-te-ver',
             ),
-
             const SizedBox(width: 10),
-
             Expanded(
               child: Text(
                 'Bem-te-ver • ${titulos[paginaAtual]}',
@@ -156,14 +176,14 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
       body: IndexedStack(
         index: paginaAtual,
         children: [
-          // Pacientes: cadastro, pesquisa, filtros e edição.
           PacientesScreen(
             pacientes: _pacientes,
             onCadastrar: _cadastrarPaciente,
             onEditar: _editarPaciente,
+            onExcluir: _excluirPaciente,
+            possuiAgendamentos: _possuiAgendamentos,
           ),
 
-          // Agenda de consultas.
           AgendaScreen(
             pacientes: _pacientes,
             agendamentos: _agendamentos,
@@ -171,10 +191,8 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
             onExcluir: _excluirAgendamento,
           ),
 
-          // Recursos terapêuticos.
           const Center(child: Text('Recursos terapêuticos')),
 
-          // Informações do profissional.
           ConsultorioScreen(profissional: widget.profissional),
         ],
       ),
@@ -213,7 +231,6 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
   }
 }
 
-// Exibe os dados do profissional cadastrado.
 class ConsultorioScreen extends StatelessWidget {
   final Profissional profissional;
 
@@ -228,9 +245,7 @@ class ConsultorioScreen extends StatelessWidget {
           'Meu consultório',
           style: Theme.of(context).textTheme.headlineSmall,
         ),
-
         const SizedBox(height: 16),
-
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -244,26 +259,20 @@ class ConsultorioScreen extends StatelessWidget {
                   fit: BoxFit.contain,
                   semanticLabel: 'Logo do Bem-te-ver',
                 ),
-
                 const SizedBox(height: 12),
-
                 Text(
                   profissional.nome,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
-
                 const SizedBox(height: 8),
                 Text(profissional.email),
-
                 const SizedBox(height: 8),
                 Text(profissional.tipo.descricao),
-
                 const SizedBox(height: 8),
                 Text(
                   '${profissional.tipo.conselho}: '
                   '${profissional.registro}',
                 ),
-
                 const SizedBox(height: 8),
                 Text('UF: ${profissional.uf}'),
               ],

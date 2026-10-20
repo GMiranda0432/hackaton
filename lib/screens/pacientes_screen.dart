@@ -6,12 +6,16 @@ class PacientesScreen extends StatefulWidget {
   final List<Paciente> pacientes;
   final ValueChanged<Paciente> onCadastrar;
   final ValueChanged<Paciente>? onEditar;
+  final bool Function(String)? onExcluir;
+  final bool Function(String)? possuiAgendamentos;
 
   const PacientesScreen({
     super.key,
     required this.pacientes,
     required this.onCadastrar,
     this.onEditar,
+    this.onExcluir,
+    this.possuiAgendamentos,
   });
 
   @override
@@ -30,7 +34,6 @@ class _PacientesScreenState extends State<PacientesScreen> {
     super.dispose();
   }
 
-  // Normaliza nomes para pesquisa sem acentos e maiúsculas.
   String _normalizar(String texto) {
     return texto
         .toLowerCase()
@@ -42,7 +45,6 @@ class _PacientesScreenState extends State<PacientesScreen> {
         .replaceAll('ç', 'c');
   }
 
-  // Aplica pesquisa, filtro e ordenação alfabética.
   List<Paciente> get _pacientesFiltrados {
     final pesquisaNormalizada = _normalizar(_pesquisa.trim());
 
@@ -80,7 +82,6 @@ class _PacientesScreenState extends State<PacientesScreen> {
     });
   }
 
-  // Abre o formulário para cadastrar um paciente.
   Future<void> _abrirCadastro(BuildContext context) async {
     final paciente = await showModalBottomSheet<Paciente>(
       context: context,
@@ -102,7 +103,6 @@ class _PacientesScreenState extends State<PacientesScreen> {
     );
   }
 
-  // Abre o formulário preenchido para editar um paciente.
   Future<void> _abrirEdicao(BuildContext context, Paciente paciente) async {
     if (widget.onEditar == null) {
       return;
@@ -125,6 +125,100 @@ class _PacientesScreenState extends State<PacientesScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Paciente atualizado com sucesso!')),
+    );
+  }
+
+  // Solicita confirmação e protege consultas vinculadas.
+  Future<void> _confirmarExclusao(
+    BuildContext context,
+    Paciente paciente,
+  ) async {
+    if (widget.onExcluir == null) {
+      return;
+    }
+
+    // Bloqueia a exclusão se houver consultas.
+    if (widget.possuiAgendamentos?.call(paciente.id) ?? false) {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Exclusão indisponível'),
+            content: Text(
+              'O paciente ${paciente.nome} possui '
+              'consultas vinculadas na Agenda. '
+              'Cancele essas consultas antes de '
+              'excluir o cadastro.',
+            ),
+            actions: [
+              FilledButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                },
+                child: const Text('Entendi'),
+              ),
+            ],
+          );
+        },
+      );
+
+      return;
+    }
+
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Excluir paciente'),
+          content: Text(
+            'Deseja realmente excluir o cadastro de '
+            '${paciente.nome}? Esta ação não poderá '
+            'ser desfeita.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, false);
+              },
+              child: const Text('Cancelar'),
+            ),
+            FilledButton.icon(
+              key: const Key('btn_confirmar_exclusao'),
+              onPressed: () {
+                Navigator.pop(dialogContext, true);
+              },
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Excluir'),
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+                foregroundColor: Theme.of(context).colorScheme.onError,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmar != true || !context.mounted) {
+      return;
+    }
+
+    // O callback também verifica se a exclusão é permitida.
+    final excluido = widget.onExcluir!(paciente.id);
+
+    if (!context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          excluido
+              ? 'Paciente excluído com sucesso!'
+              : 'Não foi possível excluir o paciente. '
+                    'Verifique se existem consultas vinculadas.',
+        ),
+      ),
     );
   }
 
@@ -207,7 +301,6 @@ class _PacientesScreenState extends State<PacientesScreen> {
 
           const SizedBox(height: 8),
 
-          // Filtros por situação.
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -247,7 +340,6 @@ class _PacientesScreenState extends State<PacientesScreen> {
 
           const SizedBox(height: 20),
 
-          // Cadastro de pacientes.
           FilledButton.icon(
             key: const Key('btn_novo_paciente'),
             onPressed: () => _abrirCadastro(context),
@@ -269,7 +361,6 @@ class _PacientesScreenState extends State<PacientesScreen> {
             const SizedBox(height: 12),
           ],
 
-          // Exibição da listagem.
           if (pacientesFiltrados.isEmpty)
             SizedBox(
               height: 250,
@@ -284,6 +375,9 @@ class _PacientesScreenState extends State<PacientesScreen> {
                 onEditar: widget.onEditar == null
                     ? null
                     : () => _abrirEdicao(context, paciente),
+                onExcluir: widget.onExcluir == null
+                    ? null
+                    : () => _confirmarExclusao(context, paciente),
               ),
             ),
         ],
@@ -292,7 +386,7 @@ class _PacientesScreenState extends State<PacientesScreen> {
   }
 }
 
-// Mensagem quando não existem pacientes.
+// Estado inicial da listagem.
 class _ListaVazia extends StatelessWidget {
   const _ListaVazia();
 
@@ -328,7 +422,7 @@ class _ListaVazia extends StatelessWidget {
   }
 }
 
-// Mensagem quando a pesquisa não encontra pacientes.
+// Mensagem para pesquisas sem resultados.
 class _SemResultados extends StatelessWidget {
   final VoidCallback onLimparFiltros;
 
@@ -375,12 +469,13 @@ class _SemResultados extends StatelessWidget {
   }
 }
 
-// Card de cada paciente, incluindo o botão Editar.
+// Card com as opções Editar e Excluir.
 class _CardPaciente extends StatelessWidget {
   final Paciente paciente;
   final VoidCallback? onEditar;
+  final VoidCallback? onExcluir;
 
-  const _CardPaciente({required this.paciente, this.onEditar});
+  const _CardPaciente({required this.paciente, this.onEditar, this.onExcluir});
 
   String get iniciais {
     final partes = paciente.nome.trim().split(RegExp(r'\s+'));
@@ -402,14 +497,27 @@ class _CardPaciente extends StatelessWidget {
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
 
-          trailing: onEditar == null
-              ? null
-              : IconButton(
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (onEditar != null)
+                IconButton(
                   key: Key('btn_editar_${paciente.id}'),
                   tooltip: 'Editar paciente',
                   onPressed: onEditar,
                   icon: const Icon(Icons.edit_outlined),
                 ),
+
+              if (onExcluir != null)
+                IconButton(
+                  key: Key('btn_excluir_${paciente.id}'),
+                  tooltip: 'Excluir paciente',
+                  onPressed: onExcluir,
+                  color: Theme.of(context).colorScheme.error,
+                  icon: const Icon(Icons.delete_outline),
+                ),
+            ],
+          ),
 
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -434,7 +542,7 @@ class _CardPaciente extends StatelessWidget {
   }
 }
 
-// Formulário reutilizado para cadastro e edição.
+// Formulário compartilhado pelo cadastro e pela edição.
 class FormularioPaciente extends StatefulWidget {
   final Paciente? paciente;
 
@@ -483,7 +591,6 @@ class _FormularioPacienteState extends State<FormularioPaciente> {
     }
 
     final paciente = Paciente(
-      // Na edição, mantém o identificador original.
       id:
           widget.paciente?.id ??
           DateTime.now().microsecondsSinceEpoch.toString(),
@@ -523,7 +630,6 @@ class _FormularioPacienteState extends State<FormularioPaciente> {
 
               const SizedBox(height: 24),
 
-              // Nome completo.
               TextFormField(
                 key: const Key('campo_paciente_nome'),
                 controller: _nomeController,
@@ -536,14 +642,12 @@ class _FormularioPacienteState extends State<FormularioPaciente> {
                   if (valor == null || valor.trim().length < 3) {
                     return 'Informe o nome do paciente';
                   }
-
                   return null;
                 },
               ),
 
               const SizedBox(height: 16),
 
-              // Idade.
               TextFormField(
                 key: const Key('campo_paciente_idade'),
                 controller: _idadeController,
@@ -565,7 +669,6 @@ class _FormularioPacienteState extends State<FormularioPaciente> {
 
               const SizedBox(height: 16),
 
-              // Telefone.
               TextFormField(
                 key: const Key('campo_paciente_telefone'),
                 controller: _telefoneController,
@@ -594,7 +697,6 @@ class _FormularioPacienteState extends State<FormularioPaciente> {
 
               const SizedBox(height: 16),
 
-              // Situação do paciente.
               DropdownButtonFormField<StatusPaciente>(
                 initialValue: _status,
                 decoration: const InputDecoration(
