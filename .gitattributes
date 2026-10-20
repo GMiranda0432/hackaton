@@ -1,4 +1,2 @@
 *.kt linguist-vendored
-*.kts linguist-vendoredgit add .gitattributes
-git commit -m "chore: remove projeto Kotlin legado"
-git push origin main
+*.kts linguist-vendored
