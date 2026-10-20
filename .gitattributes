@@ -1,2 +1,4 @@
-# Ignora o projeto Android legado nas estatísticas de linguagens
-/app/** linguist-vendored
+*.kt linguist-vendored
+*.kts linguist-vendoredgit add .gitattributes
+git commit -m "chore: remove projeto Kotlin legado"
+git push origin main
