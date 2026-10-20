@@ -3,21 +3,46 @@ import 'package:flutter/material.dart';
 import '../models/agendamento.dart';
 import '../models/paciente.dart';
 
+// ============================================================
+// FORMATAÇÃO
+// ============================================================
+
 String formatarData(DateTime data) {
   final dia = data.day.toString().padLeft(2, '0');
   final mes = data.month.toString().padLeft(2, '0');
+
   return '$dia/$mes/${data.year}';
 }
 
 String formatarHora(DateTime data) {
   final hora = data.hour.toString().padLeft(2, '0');
   final minuto = data.minute.toString().padLeft(2, '0');
+
   return '$hora:$minuto';
 }
 
+// Formata valores com separador de milhares e vírgula decimal.
 String formatarValor(double valor) {
-  return 'R\$ ${valor.toStringAsFixed(2).replaceAll('.', ',')}';
+  final partes = valor.toStringAsFixed(2).split('.');
+  final inteiro = partes[0];
+  final centavos = partes[1];
+
+  final formatado = StringBuffer();
+
+  for (var i = 0; i < inteiro.length; i++) {
+    if (i > 0 && (inteiro.length - i) % 3 == 0) {
+      formatado.write('.');
+    }
+
+    formatado.write(inteiro[i]);
+  }
+
+  return 'R\$ ${formatado.toString()},$centavos';
 }
+
+// ============================================================
+// TELA PRINCIPAL DA AGENDA
+// ============================================================
 
 class AgendaScreen extends StatelessWidget {
   final List<Paciente> pacientes;
@@ -43,6 +68,7 @@ class AgendaScreen extends StatelessWidget {
     return 'Paciente não encontrado';
   }
 
+  // Impede consultas em horários sobrepostos.
   bool _possuiConflito(Agendamento candidato) {
     return agendamentos.any(
       (existente) =>
@@ -50,6 +76,7 @@ class AgendaScreen extends StatelessWidget {
     );
   }
 
+  // Abre o formulário para criar ou editar uma consulta.
   Future<void> _abrirFormulario(
     BuildContext context, [
     Agendamento? existente,
@@ -93,6 +120,7 @@ class AgendaScreen extends StatelessWidget {
     );
   }
 
+  // Solicita confirmação antes de cancelar uma consulta.
   Future<void> _confirmarExclusao(
     BuildContext context,
     Agendamento agendamento,
@@ -249,8 +277,9 @@ class AgendaScreen extends StatelessWidget {
 
                         const SizedBox(height: 8),
 
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
+                        Wrap(
+                          alignment: WrapAlignment.end,
+                          spacing: 8,
                           children: [
                             TextButton.icon(
                               onPressed: () {
@@ -259,6 +288,7 @@ class AgendaScreen extends StatelessWidget {
                               icon: const Icon(Icons.edit_outlined),
                               label: const Text('Editar'),
                             ),
+
                             TextButton.icon(
                               onPressed: () {
                                 _confirmarExclusao(context, agendamento);
@@ -280,6 +310,10 @@ class AgendaScreen extends StatelessWidget {
   }
 }
 
+// ============================================================
+// FORMULÁRIO DE AGENDAMENTO
+// ============================================================
+
 class FormularioAgendamento extends StatefulWidget {
   final List<Paciente> pacientes;
   final Agendamento? agendamento;
@@ -300,6 +334,9 @@ class _FormularioAgendamentoState extends State<FormularioAgendamento> {
   final _formKey = GlobalKey<FormState>();
   final _valorController = TextEditingController();
 
+  // Limite definido para a demonstração do protótipo.
+  static const double _valorHoraMaximo = 10000;
+
   late String _pacienteId;
   late DateTime _data;
   late TimeOfDay _inicio;
@@ -312,9 +349,18 @@ class _FormularioAgendamentoState extends State<FormularioAgendamento> {
     super.initState();
 
     final atual = widget.agendamento;
+    final agora = DateTime.now();
 
     _pacienteId = atual?.pacienteId ?? widget.pacientes.first.id;
-    _data = atual?.inicio ?? DateTime.now();
+
+    // Novas consultas começam em uma data válida.
+    final horarioPadrao = DateTime(agora.year, agora.month, agora.day, 9);
+
+    _data =
+        atual?.inicio ??
+        (horarioPadrao.isAfter(agora)
+            ? agora
+            : DateTime(agora.year, agora.month, agora.day + 1));
 
     _inicio = atual != null
         ? TimeOfDay.fromDateTime(atual.inicio)
@@ -335,32 +381,56 @@ class _FormularioAgendamentoState extends State<FormularioAgendamento> {
     super.dispose();
   }
 
-  int _minutos(TimeOfDay hora) {
-    return hora.hour * 60 + hora.minute;
+  int _minutos(TimeOfDay horario) {
+    return horario.hour * 60 + horario.minute;
   }
 
+  // Aceita valores como 100, 100,50 ou 100.50.
+  // Não permite valores negativos ou acima de R$ 10.000/h.
   double? get _valorHora {
-    final texto = _valorController.text.trim().replaceAll(',', '.');
+    final texto = _valorController.text.trim();
 
-    return double.tryParse(texto);
+    final formatoValido = RegExp(r'^\d{1,5}([,.]\d{1,2})?$').hasMatch(texto);
+
+    if (!formatoValido) {
+      return null;
+    }
+
+    final valor = double.tryParse(texto.replaceAll(',', '.'));
+
+    if (valor == null ||
+        !valor.isFinite ||
+        valor < 0 ||
+        valor > _valorHoraMaximo) {
+      return null;
+    }
+
+    return valor;
   }
 
   double get _valorTotal {
-    final valor = _valorHora ?? 0;
+    final valor = _valorHora;
     final minutos = _minutos(_fim) - _minutos(_inicio);
 
-    if (minutos <= 0 || valor < 0 || !valor.isFinite) {
+    if (valor == null || minutos <= 0) {
       return 0;
     }
 
     return minutos / 60 * valor;
   }
 
+  // Abre o calendário.
   Future<void> _selecionarData() async {
+    final agora = DateTime.now();
+
+    final primeiroDia = widget.agendamento == null
+        ? DateTime(agora.year, agora.month, agora.day)
+        : DateTime(2020);
+
     final data = await showDatePicker(
       context: context,
-      initialDate: _data,
-      firstDate: DateTime(2020),
+      initialDate: _data.isBefore(primeiroDia) ? primeiroDia : _data,
+      firstDate: primeiroDia,
       lastDate: DateTime(2100),
     );
 
@@ -372,6 +442,7 @@ class _FormularioAgendamentoState extends State<FormularioAgendamento> {
     }
   }
 
+  // Abre o seletor de horário no formato de 24 horas.
   Future<void> _selecionarHorario({required bool horarioInicial}) async {
     final selecionado = await showTimePicker(
       context: context,
@@ -410,17 +481,38 @@ class _FormularioAgendamentoState extends State<FormularioAgendamento> {
   String _formatarTimeOfDay(TimeOfDay horario) {
     final horas = horario.hour.toString().padLeft(2, '0');
     final minutos = horario.minute.toString().padLeft(2, '0');
+
     return '$horas:$minutos';
   }
 
+  // Valida e salva o agendamento.
   void _salvar() {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    if (_minutos(_fim) <= _minutos(_inicio)) {
+    final inicio = _combinarDataHorario(_inicio);
+    final fim = _combinarDataHorario(_fim);
+
+    // Horário final precisa ser posterior ao inicial.
+    if (!fim.isAfter(inicio)) {
       setState(() {
         _erroHorario = 'O horário final deve ser posterior ao inicial.';
+      });
+      return;
+    }
+
+    // Impede criar consultas no passado.
+    // Consultas antigas podem manter sua data durante
+    // a edição, desde que o horário não seja alterado.
+    final horarioOriginal = widget.agendamento?.inicio;
+
+    final horarioFoiAlterado =
+        horarioOriginal == null || !inicio.isAtSameMomentAs(horarioOriginal);
+
+    if (horarioFoiAlterado && inicio.isBefore(DateTime.now())) {
+      setState(() {
+        _erroHorario = 'Não é possível agendar consultas no passado.';
       });
       return;
     }
@@ -430,11 +522,12 @@ class _FormularioAgendamentoState extends State<FormularioAgendamento> {
           widget.agendamento?.id ??
           DateTime.now().microsecondsSinceEpoch.toString(),
       pacienteId: _pacienteId,
-      inicio: _combinarDataHorario(_inicio),
-      fim: _combinarDataHorario(_fim),
+      inicio: inicio,
+      fim: fim,
       valorHora: _valorHora!,
     );
 
+    // Confere se já existe uma consulta nesse horário.
     if (widget.possuiConflito(novo)) {
       setState(() {
         _erroHorario = 'Já existe uma consulta nesse intervalo de horário.';
@@ -447,6 +540,8 @@ class _FormularioAgendamentoState extends State<FormularioAgendamento> {
 
   @override
   Widget build(BuildContext context) {
+    final valorValido = _valorHora != null;
+
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SingleChildScrollView(
@@ -466,6 +561,7 @@ class _FormularioAgendamentoState extends State<FormularioAgendamento> {
 
               const SizedBox(height: 20),
 
+              // Seleção do paciente.
               DropdownButtonFormField<String>(
                 key: const Key('campo_agenda_paciente'),
                 initialValue: _pacienteId,
@@ -491,6 +587,7 @@ class _FormularioAgendamentoState extends State<FormularioAgendamento> {
 
               const SizedBox(height: 16),
 
+              // Data da consulta.
               OutlinedButton.icon(
                 key: const Key('btn_agenda_data'),
                 onPressed: _selecionarData,
@@ -500,6 +597,7 @@ class _FormularioAgendamentoState extends State<FormularioAgendamento> {
 
               const SizedBox(height: 12),
 
+              // Horário de início e término.
               Row(
                 children: [
                   Expanded(
@@ -526,6 +624,7 @@ class _FormularioAgendamentoState extends State<FormularioAgendamento> {
                 ],
               ),
 
+              // Mensagens de erro relacionadas a horários.
               if (_erroHorario != null) ...[
                 const SizedBox(height: 12),
                 Text(
@@ -536,24 +635,27 @@ class _FormularioAgendamentoState extends State<FormularioAgendamento> {
 
               const SizedBox(height: 16),
 
+              // Valor cobrado por hora.
               TextFormField(
                 key: const Key('campo_agenda_valor'),
                 controller: _valorController,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
+                autovalidateMode: AutovalidateMode.onUserInteraction,
                 decoration: const InputDecoration(
                   labelText: 'Valor por hora (R\$)',
+                  hintText: 'Ex.: 150,00',
+                  helperText: 'Valor permitido: R\$ 0,00 a R\$ 10.000,00',
                   prefixIcon: Icon(Icons.payments_outlined),
                 ),
                 onChanged: (_) {
                   setState(() {});
                 },
-                validator: (valor) {
-                  final preco = _valorHora;
-
-                  if (preco == null || !preco.isFinite || preco < 0) {
-                    return 'Informe um valor válido';
+                validator: (_) {
+                  if (_valorHora == null) {
+                    return 'Informe um valor entre '
+                        'R\$ 0,00 e R\$ 10.000,00';
                   }
 
                   return null;
@@ -562,16 +664,22 @@ class _FormularioAgendamentoState extends State<FormularioAgendamento> {
 
               const SizedBox(height: 20),
 
+              // Cálculo automático do valor total.
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
                       const Text('Valor total da consulta'),
+
                       const SizedBox(height: 8),
+
                       Text(
-                        formatarValor(_valorTotal),
+                        valorValido
+                            ? formatarValor(_valorTotal)
+                            : 'Valor inválido',
                         style: Theme.of(context).textTheme.headlineSmall,
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),

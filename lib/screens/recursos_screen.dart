@@ -2,12 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-/// Tela de Recursos Terapêuticos do Bem-te-ver.
-///
-/// Reúne três abas de apoio ao psicólogo durante a sessão:
-/// 1. Ansiedade: exercício de respiração guiada.
-/// 2. Questionário: rastreio rápido do nível de depressão (PHQ-9).
-/// 3. Sinais & Sintomas: resumo consultivo de transtornos mentais.
+// ============================================================
+// BEM-TE-VER — RECURSOS TERAPÊUTICOS
+// ============================================================
+
 class RecursosScreen extends StatelessWidget {
   const RecursosScreen({super.key});
 
@@ -18,8 +16,12 @@ class RecursosScreen extends StatelessWidget {
       child: Column(
         children: [
           TabBar(
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
             labelColor: Theme.of(context).colorScheme.primary,
-            unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+            unselectedLabelColor: Theme.of(context)
+                .colorScheme
+                .onSurfaceVariant,
             indicatorColor: Theme.of(context).colorScheme.primary,
             tabs: const [
               Tab(text: 'Ansiedade'),
@@ -42,9 +44,9 @@ class RecursosScreen extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Aba 1 - Ansiedade (exercício de respiração guiada)
-// ---------------------------------------------------------------------------
+// ============================================================
+// ABA 1 — ANSIEDADE
+// ============================================================
 
 class _TecnicaRespiracao {
   final String titulo;
@@ -72,7 +74,7 @@ class _AbaAnsiedade extends StatefulWidget {
 }
 
 class _AbaAnsiedadeState extends State<_AbaAnsiedade> {
-  static const List<_TecnicaRespiracao> _tecnicas = [
+  static const _tecnicas = [
     _TecnicaRespiracao(
       titulo: 'Box (4-4-4-4)',
       inspire: 4,
@@ -80,8 +82,8 @@ class _AbaAnsiedadeState extends State<_AbaAnsiedade> {
       expire: 4,
       pausa: 4,
       descricao:
-          'Ritmo equilibrado que ajuda a desacelerar o sistema nervoso '
-          'e a recuperar o foco em momentos de tensão.',
+          'Respiração em quatro etapas, com tempos iguais '
+          'de inspiração, retenção, expiração e pausa.',
     ),
     _TecnicaRespiracao(
       titulo: '4-7-8',
@@ -90,8 +92,8 @@ class _AbaAnsiedadeState extends State<_AbaAnsiedade> {
       expire: 8,
       pausa: 0,
       descricao:
-          'Expiração longa que reduz os batimentos cardíacos. '
-          'Útil em crises de ansiedade e antes de dormir.',
+          'Técnica com expiração prolongada. '
+          'Deve ser utilizada conforme a tolerância individual.',
     ),
     _TecnicaRespiracao(
       titulo: 'Calmante (4-6)',
@@ -100,16 +102,15 @@ class _AbaAnsiedadeState extends State<_AbaAnsiedade> {
       expire: 6,
       pausa: 0,
       descricao:
-          'Respiração simples com expiração prolongada, '
-          'indicada para acalmar rapidamente durante o atendimento.',
+          'Inspiração de quatro segundos seguida de '
+          'expiração lenta de seis segundos.',
     ),
   ];
 
   int _tecnicaSelecionada = 0;
-
   bool _executando = false;
   String _fase = 'Pronto';
-  int _segundosRestantes = _tecnicas.first.inspire;
+  int _segundosRestantes = 4;
   int _ciclos = 0;
 
   Timer? _timer;
@@ -122,7 +123,6 @@ class _AbaAnsiedadeState extends State<_AbaAnsiedade> {
     super.dispose();
   }
 
-  // Avança para a próxima fase da técnica, ignorando fases com duração zero.
   void _avancarFase() {
     switch (_fase) {
       case 'Inspire':
@@ -133,9 +133,13 @@ class _AbaAnsiedadeState extends State<_AbaAnsiedade> {
           _fase = 'Expire';
           _segundosRestantes = _tecnica.expire;
         }
+        break;
+
       case 'Segure':
         _fase = 'Expire';
         _segundosRestantes = _tecnica.expire;
+        break;
+
       case 'Expire':
         if (_tecnica.pausa > 0) {
           _fase = 'Pausa';
@@ -145,10 +149,14 @@ class _AbaAnsiedadeState extends State<_AbaAnsiedade> {
           _fase = 'Inspire';
           _segundosRestantes = _tecnica.inspire;
         }
+        break;
+
       case 'Pausa':
         _ciclos++;
         _fase = 'Inspire';
         _segundosRestantes = _tecnica.inspire;
+        break;
+
       default:
         _fase = 'Inspire';
         _segundosRestantes = _tecnica.inspire;
@@ -157,14 +165,13 @@ class _AbaAnsiedadeState extends State<_AbaAnsiedade> {
 
   void _iniciarTimer() {
     _timer?.cancel();
+
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       setState(() {
         if (_segundosRestantes > 1) {
-          _segundosRestantes -= 1;
+          _segundosRestantes--;
         } else {
           _avancarFase();
         }
@@ -175,9 +182,11 @@ class _AbaAnsiedadeState extends State<_AbaAnsiedade> {
   void _alternarExecucao() {
     if (_executando) {
       _timer?.cancel();
+
       setState(() {
         _executando = false;
       });
+
       return;
     }
 
@@ -195,6 +204,7 @@ class _AbaAnsiedadeState extends State<_AbaAnsiedade> {
 
   void _reiniciarExercicio() {
     _timer?.cancel();
+
     setState(() {
       _executando = false;
       _fase = 'Pronto';
@@ -205,6 +215,7 @@ class _AbaAnsiedadeState extends State<_AbaAnsiedade> {
 
   void _selecionarTecnica(int indice) {
     _timer?.cancel();
+
     setState(() {
       _tecnicaSelecionada = indice;
       _executando = false;
@@ -214,7 +225,6 @@ class _AbaAnsiedadeState extends State<_AbaAnsiedade> {
     });
   }
 
-  // Escala visual do círculo conforme a fase de respiração.
   double get _escala {
     switch (_fase) {
       case 'Inspire':
@@ -249,8 +259,8 @@ class _AbaAnsiedadeState extends State<_AbaAnsiedade> {
         Text('Respiração guiada', style: tema.textTheme.headlineSmall),
         const SizedBox(height: 8),
         const Text(
-          'Exercício prático para crises de ansiedade. '
-          'Escolha a técnica, acompanhe o círculo e o contador.',
+          'Escolha uma técnica e acompanhe as instruções '
+          'de respiração na tela.',
         ),
         const SizedBox(height: 20),
 
@@ -259,7 +269,7 @@ class _AbaAnsiedadeState extends State<_AbaAnsiedade> {
           child: Row(
             children: List.generate(_tecnicas.length, (indice) {
               return Padding(
-                padding: EdgeInsets.only(right: indice == _tecnicas.length - 1 ? 0 : 8),
+                padding: const EdgeInsets.only(right: 8),
                 child: ChoiceChip(
                   key: Key('tecnica_$indice'),
                   label: Text(_tecnicas[indice].titulo),
@@ -275,8 +285,8 @@ class _AbaAnsiedadeState extends State<_AbaAnsiedade> {
 
         Text(
           _tecnica.descricao,
-          style: tema.textTheme.bodySmall,
           textAlign: TextAlign.center,
+          style: tema.textTheme.bodySmall,
         ),
 
         const SizedBox(height: 20),
@@ -297,27 +307,29 @@ class _AbaAnsiedadeState extends State<_AbaAnsiedade> {
                     color: tema.colorScheme.primaryContainer,
                   ),
                 ),
+
                 AnimatedContainer(
                   duration: Duration(milliseconds: _duracaoAnimacao),
                   curve: Curves.easeInOut,
                   width: 180 * _escala,
                   height: 180 * _escala,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: tema.colorScheme.primary,
                   ),
-                  alignment: Alignment.center,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _executando ? _fase : 'Começar',
+                        _fase == 'Pronto' ? 'Começar' : _fase,
                         style: tema.textTheme.titleLarge?.copyWith(
                           color: tema.colorScheme.onPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      if (_executando)
+
+                      if (_fase != 'Pronto')
                         Text(
                           '${_segundosRestantes}s',
                           style: tema.textTheme.headlineSmall?.copyWith(
@@ -334,13 +346,7 @@ class _AbaAnsiedadeState extends State<_AbaAnsiedade> {
 
         const SizedBox(height: 12),
 
-        Text(
-          _executando
-              ? 'Ciclos realizados: $_ciclos'
-              : 'Encontre uma postura confortável e relaxe os ombros.',
-          textAlign: TextAlign.center,
-          style: tema.textTheme.bodyMedium,
-        ),
+        Text('Ciclos realizados: $_ciclos', textAlign: TextAlign.center),
 
         const SizedBox(height: 20),
 
@@ -352,21 +358,17 @@ class _AbaAnsiedadeState extends State<_AbaAnsiedade> {
                 onPressed: _reiniciarExercicio,
                 icon: const Icon(Icons.refresh),
                 label: const Text('Reiniciar'),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(48),
-                ),
               ),
             ),
+
             const SizedBox(width: 12),
+
             Expanded(
               child: FilledButton.icon(
                 key: const Key('btn_toggle_respiracao'),
                 onPressed: _alternarExecucao,
                 icon: Icon(_executando ? Icons.pause : Icons.play_arrow),
                 label: Text(_executando ? 'Pausar' : 'Iniciar'),
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(48),
-                ),
               ),
             ),
           ],
@@ -386,9 +388,9 @@ class _AbaAnsiedadeState extends State<_AbaAnsiedade> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Você pode conduzir o exercício junto com o paciente nos '
-                  'primeiros minutos do atendimento ou orientá-lo a repetir '
-                  'de 3 a 5 ciclos em casa, nos momentos de maior tensão.',
+                  'O profissional pode orientar o exercício '
+                  'conforme as necessidades e condições do paciente. '
+                  'Interrompa caso haja tontura, falta de ar ou desconforto.',
                 ),
               ],
             ),
@@ -399,9 +401,9 @@ class _AbaAnsiedadeState extends State<_AbaAnsiedade> {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Aba 2 - Questionário (rastreio de depressão - PHQ-9)
-// ---------------------------------------------------------------------------
+// ============================================================
+// ABA 2 — QUESTIONÁRIO PHQ-9
+// ============================================================
 
 class _OpcaoEscala {
   final String rotulo;
@@ -412,9 +414,8 @@ class _OpcaoEscala {
 
 class _ResultadoPHQ9 {
   final String nivel;
-  final String orientacao;
 
-  const _ResultadoPHQ9(this.nivel, this.orientacao);
+  const _ResultadoPHQ9(this.nivel);
 }
 
 class _AbaQuestionario extends StatefulWidget {
@@ -444,55 +445,44 @@ class _AbaQuestionarioState extends State<_AbaQuestionario> {
     _OpcaoEscala('Quase todos os dias', 3),
   ];
 
-  // Cada resposta começa em "Nenhum dia" (0).
-  final List<int> _respostas = List<int>.filled(_perguntas.length, 0);
+  // Nenhuma pergunta começa respondida.
+  final List<int?> _respostas = List<int?>.filled(_perguntas.length, null);
 
-  int get _total => _respostas.fold(0, (soma, valor) => soma + valor);
+  int get _quantidadeRespondida =>
+      _respostas.where((resposta) => resposta != null).length;
+
+  bool get _completo => _quantidadeRespondida == _perguntas.length;
+
+  int get _total =>
+      _respostas.fold<int>(0, (soma, resposta) => soma + (resposta ?? 0));
+
+  // Alerta específico para a pergunta 9.
+  bool get _alertaAutoagressao => (_respostas[8] ?? 0) > 0;
 
   _ResultadoPHQ9 _avaliar(int total) {
     if (total <= 4) {
-      return const _ResultadoPHQ9(
-        'Mínima ou ausente',
-        'Sintomas mínimos. Manter acompanhamento de rotina e medidas '
-            'preventivas de saúde mental.',
-      );
+      return const _ResultadoPHQ9('Mínima ou ausente');
     }
 
     if (total <= 9) {
-      return const _ResultadoPHQ9(
-        'Leve',
-        'Sintomas leves. Psicoeducação, técnicas de relaxamento e '
-            'monitoramento quinzenal costumam ser úteis.',
-      );
+      return const _ResultadoPHQ9('Leve');
     }
 
     if (total <= 14) {
-      return const _ResultadoPHQ9(
-        'Moderada',
-        'Sintomas moderados. Indicada intervenção psicoterápica estruturada '
-            'e avaliação multidisciplinar.',
-      );
+      return const _ResultadoPHQ9('Moderada');
     }
 
     if (total <= 19) {
-      return const _ResultadoPHQ9(
-        'Moderadamente grave',
-        'Sintomas importantes. Considerar avaliação médica e '
-            'acompanhamento intensificado.',
-      );
+      return const _ResultadoPHQ9('Moderadamente grave');
     }
 
-    return const _ResultadoPHQ9(
-      'Grave',
-      'Sintomas graves. Prioridade clínica: articular com a rede pública '
-          '(CAPS/UBS) e avaliar risco de forma cuidadosa.',
-    );
+    return const _ResultadoPHQ9('Grave');
   }
 
   void _reiniciar() {
     setState(() {
       for (var i = 0; i < _respostas.length; i++) {
-        _respostas[i] = 0;
+        _respostas[i] = null;
       }
     });
   }
@@ -521,7 +511,9 @@ class _AbaQuestionarioState extends State<_AbaQuestionario> {
                   ? tema.colorScheme.primary
                   : tema.colorScheme.onSurfaceVariant,
             ),
+
             const SizedBox(width: 10),
+
             Expanded(
               child: Text(
                 '${opcao.rotulo} (${opcao.valor} pt)',
@@ -541,18 +533,28 @@ class _AbaQuestionarioState extends State<_AbaQuestionario> {
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
-    final total = _total;
-    final resultado = _avaliar(total);
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Nível de depressão', style: tema.textTheme.headlineSmall),
+        Text('Questionário PHQ-9', style: tema.textTheme.headlineSmall),
+
         const SizedBox(height: 8),
+
         const Text(
-          'Nas últimas 2 semanas, com que frequência o(a) paciente foi '
-          'incomodado(a) por cada situação abaixo?',
+          'Nas últimas duas semanas, com que frequência '
+          'o(a) paciente foi incomodado(a) por cada situação?',
         ),
+
+        const SizedBox(height: 16),
+
+        // Mostra o progresso sem apresentar pontuação prematura.
+        Text(
+          'Perguntas respondidas: '
+          '$_quantidadeRespondida de ${_perguntas.length}',
+          style: tema.textTheme.titleSmall,
+        ),
+
         const SizedBox(height: 20),
 
         ...List.generate(_perguntas.length, (indice) {
@@ -567,7 +569,9 @@ class _AbaQuestionarioState extends State<_AbaQuestionario> {
                     '${indice + 1}. ${_perguntas[indice]}',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
+
                   const SizedBox(height: 8),
+
                   ..._opcoes.map((opcao) => _opcao(indice, opcao)),
                 ],
               ),
@@ -575,34 +579,106 @@ class _AbaQuestionarioState extends State<_AbaQuestionario> {
           );
         }),
 
+        // Alerta mesmo se o questionário estiver incompleto.
+        if (_alertaAutoagressao) ...[
+          const SizedBox(height: 12),
+
+          Card(
+            key: const Key('alerta_autoagressao'),
+            color: tema.colorScheme.errorContainer,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: tema.colorScheme.onErrorContainer,
+                      ),
+
+                      const SizedBox(width: 8),
+
+                      Expanded(
+                        child: Text(
+                          'Atenção: resposta positiva à pergunta 9',
+                          style: tema.textTheme.titleSmall?.copyWith(
+                            color: tema.colorScheme.onErrorContainer,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Text(
+                    'A resposta indica a necessidade de '
+                    'avaliação clínica específica sobre '
+                    'pensamentos de morte ou autoagressão, '
+                    'independentemente da pontuação total. '
+                    'O profissional deve investigar o risco '
+                    'atual e adotar as medidas de segurança '
+                    'adequadas. Havendo risco iminente, '
+                    'acionar atendimento de emergência.',
+                    style: TextStyle(color: tema.colorScheme.onErrorContainer),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+
+        const SizedBox(height: 16),
+
+        // O resultado aparece somente com as nove respostas.
         Card(
+          key: const Key('resultado_phq9'),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Pontuação total: $total / 27',
-                        style: tema.textTheme.titleMedium,
-                      ),
+                if (!_completo) ...[
+                  Text(
+                    'Questionário incompleto',
+                    style: tema.textTheme.titleMedium,
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Text(
+                    'Responda as ${_perguntas.length} '
+                    'perguntas para visualizar a '
+                    'pontuação e a classificação.',
+                  ),
+                ] else ...[
+                  Text(
+                    'Pontuação total: $_total / 27',
+                    style: tema.textTheme.titleMedium,
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Text(
+                    'Intensidade dos sintomas: '
+                    '${_avaliar(_total).nivel}',
+                    style: TextStyle(
+                      color: tema.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
                     ),
-                    Text(
-                      resultado.nivel,
-                      style: TextStyle(
-                        color: tema.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  resultado.orientacao,
-                  style: tema.textTheme.bodySmall,
-                ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  const Text(
+                    'A pontuação representa uma medida '
+                    'de intensidade dos sintomas relatados. '
+                    'Não estabelece diagnóstico por si só.',
+                  ),
+                ],
               ],
             ),
           ),
@@ -623,8 +699,10 @@ class _AbaQuestionarioState extends State<_AbaQuestionario> {
         const SizedBox(height: 20),
 
         Text(
-          'Instrumento de apoio (PHQ-9). O resultado é orientativo e não '
-          'substitui a avaliação clínica do profissional.',
+          'Instrumento de rastreamento de sintomas '
+          'depressivos. Não substitui avaliação clínica, '
+          'entrevista profissional ou investigação '
+          'específica de risco.',
           style: tema.textTheme.bodySmall,
         ),
       ],
@@ -632,9 +710,9 @@ class _AbaQuestionarioState extends State<_AbaQuestionario> {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Aba 3 - Sinais & Sintomas (resumo consultivo)
-// ---------------------------------------------------------------------------
+// ============================================================
+// ABA 3 — SINAIS E SINTOMAS
+// ============================================================
 
 class _Transtorno {
   final String nome;
@@ -655,134 +733,151 @@ class _AbaSinaisSintomas extends StatelessWidget {
     _Transtorno(
       nome: 'Depressão',
       resumo:
-          'Humor deprimido e/ou perda de interesse persistentes por pelo '
-          'menos 2 semanas, com prejuízo no dia a dia.',
+          'Humor deprimido e/ou perda persistente de '
+          'interesse, com possível prejuízo funcional.',
       sinais: [
-        'Tristeza, vazio ou irritabilidade na maior parte do dia',
-        'Perda de interesse ou prazer (anedonia)',
-        'Alterações de sono e de apetite',
-        'Cansaço, falta de energia e lentidão',
-        'Dificuldade de concentração e de decidir',
-        'Culpa, inutilidade ou desesperança',
-        'Pensamentos de morte ou de se ferir',
+        'Tristeza ou irritabilidade persistente',
+        'Perda de interesse ou prazer',
+        'Alterações no sono e no apetite',
+        'Cansaço e falta de energia',
+        'Dificuldade de concentração',
+        'Culpa ou desesperança',
+        'Pensamentos de morte ou autoagressão',
       ],
     ),
+
     _Transtorno(
       nome: 'Ansiedade Generalizada (TAG)',
       resumo:
-          'Preocupação excessiva e difícil de controlar na maioria dos dias, '
-          'por 6 meses ou mais.',
+          'Preocupação excessiva e difícil de controlar '
+          'sobre diferentes situações do cotidiano.',
       sinais: [
-        'Preocupação constante com vários assuntos',
-        'Inquietação ou sensação de estar "no limite"',
-        'Tensão muscular e dores difusas',
-        'Dificuldade para relaxar e se concentrar',
-        'Irritabilidade e alterações do sono',
-        'Sintomas físicos: taquicardia, suor, tremores',
+        'Preocupação constante',
+        'Inquietação e tensão muscular',
+        'Dificuldade para relaxar',
+        'Irritabilidade',
+        'Alterações do sono',
+        'Dificuldade de concentração',
       ],
     ),
+
     _Transtorno(
       nome: 'Transtorno de Pânico',
       resumo:
-          'Crises súbitas e intensas de medo, com pico em poucos minutos, '
-          'seguidas de preocupação persistente com novas crises.',
+          'Ataques de pânico recorrentes, acompanhados '
+          'de preocupação ou mudanças comportamentais.',
       sinais: [
-        'Palpitações, falta de ar ou sufocamento',
-        'Dor no peito e tontura',
-        'Medo de morrer ou de "enlouquecer"',
-        'Formigamentos e calafrios',
-        'Evitação de locais ligados às crises',
+        'Palpitações',
+        'Sensação de falta de ar',
+        'Tontura e tremores',
+        'Medo intenso de morrer',
+        'Medo de novas crises',
+        'Evitação de situações associadas aos ataques',
       ],
     ),
+
     _Transtorno(
       nome: 'Transtorno Bipolar',
       resumo:
-          'Alternância entre episódios depressivos e de mania/hipomania, '
-          'com mudanças claras de energia e comportamento.',
+          'Alterações episódicas de humor e energia, '
+          'incluindo mania ou hipomania.',
       sinais: [
-        'Fases de euforia, energia e fala acelerada',
+        'Elevação ou irritabilidade do humor',
+        'Aumento de energia',
         'Redução da necessidade de sono',
-        'Gastos impulsivos e decisões arriscadas',
-        'Irritabilidade e agitação',
-        'Alternância com períodos de depressão',
+        'Fala acelerada',
+        'Impulsividade',
+        'Possíveis episódios depressivos',
       ],
     ),
+
     _Transtorno(
       nome: 'Transtorno Obsessivo-Compulsivo (TOC)',
       resumo:
-          'Obsessões (pensamentos intrusivos) e/ou compulsões (rituais) que '
-          'consomem tempo e causam sofrimento.',
+          'Obsessões e/ou compulsões associadas '
+          'a sofrimento ou prejuízo no cotidiano.',
       sinais: [
-        'Pensamentos repetitivos e indesejados',
-        'Medo de contaminação, erro ou desordem',
-        'Rituais de verificação, limpeza ou contagem',
-        'Necessidade intensa de simetria e ordem',
-        'Alívio momentâneo ao executar o ritual',
+        'Pensamentos intrusivos e recorrentes',
+        'Medo excessivo de contaminação',
+        'Rituais de verificação',
+        'Comportamentos repetitivos',
+        'Necessidade intensa de simetria',
+        'Sofrimento ao tentar resistir aos rituais',
       ],
     ),
+
     _Transtorno(
       nome: 'Estresse Pós-Traumático (TEPT)',
       resumo:
-          'Após um evento traumático, surgem sintomas persistentes por mais '
-          'de 1 mês.',
+          'Sintomas relacionados à exposição '
+          'a acontecimentos traumáticos.',
       sinais: [
-        'Lembranças intrusivas ou flashbacks',
+        'Lembranças intrusivas',
         'Pesadelos recorrentes',
-        'Evitação de lembranças, pessoas e locais',
-        'Hipervigilância e sobressalto fácil',
-        'Dificuldade de sono e irritabilidade',
+        'Evitação de lembranças do trauma',
+        'Hipervigilância',
+        'Alterações de humor',
+        'Dificuldades com o sono',
       ],
     ),
+
     _Transtorno(
       nome: 'TDAH (em adultos)',
       resumo:
-          'Padrão persistente de desatenção e/ou hiperatividade-impulsividade '
-          'presente desde a infância, com prejuízo funcional.',
+          'Padrão persistente de desatenção e/ou '
+          'hiperatividade-impulsividade com prejuízo funcional.',
       sinais: [
         'Dificuldade de manter a atenção',
-        'Esquecimentos e desorganização',
-        'Procrastinação e tarefas inacabadas',
-        'Inquietação e impulsividade',
-        'Instabilidade de humor',
+        'Esquecimentos frequentes',
+        'Desorganização',
+        'Dificuldade para concluir tarefas',
+        'Inquietação',
+        'Impulsividade',
       ],
     ),
+
     _Transtorno(
       nome: 'Transtornos Psicóticos',
       resumo:
-          'Alterações de percepção e de pensamento, em geral com queda '
-          'importante do funcionamento social e laboral.',
+          'Condições que podem envolver alterações '
+          'importantes da percepção e do pensamento.',
       sinais: [
-        'Delírios (crenças fixas que não correspondem à realidade)',
-        'Alucinações, geralmente auditivas',
+        'Delírios',
+        'Alucinações',
         'Discurso desorganizado',
-        'Embotamento afetivo e isolamento',
-        'Queda no desempenho escolar ou profissional',
+        'Comportamento desorganizado',
+        'Isolamento social',
+        'Prejuízo do funcionamento cotidiano',
       ],
     ),
+
     _Transtorno(
       nome: 'Transtornos Alimentares',
       resumo:
-          'Relação disfuncional com alimentação, peso e imagem corporal '
-          '(anorexia, bulimia, compulsão alimentar).',
+          'Alterações persistentes do comportamento '
+          'alimentar e da relação com o corpo.',
       sinais: [
-        'Preocupação excessiva com peso e forma do corpo',
-        'Restrição alimentar severa',
-        'Episódios de compulsão seguidos de culpa',
-        'Vômitos ou uso de laxantes/diuréticos',
-        'Isolamento nas refeições e alterações de peso',
+        'Preocupação intensa com peso e aparência',
+        'Restrição alimentar',
+        'Episódios de compulsão alimentar',
+        'Comportamentos compensatórios',
+        'Sentimentos de culpa relacionados à alimentação',
+        'Alterações físicas e nutricionais',
       ],
     ),
+
     _Transtorno(
       nome: 'Uso de Substâncias',
       resumo:
-          'Uso problemático de álcool ou outras drogas, com prejuízo na '
-          'saúde, nas relações e no trabalho.',
+          'Uso problemático de álcool ou outras '
+          'substâncias com possíveis prejuízos.',
       sinais: [
-        'Necessidade de aumentar a dose (tolerância)',
-        'Sintomas de abstinência ao parar',
-        'Abandono de atividades antes prazerosas',
-        'Uso mesmo com prejuízo evidente',
-        'Esconder o consumo e problemas familiares ou legais',
+        'Dificuldade em controlar o consumo',
+        'Aumento da tolerância',
+        'Sintomas de abstinência',
+        'Prejuízo nas atividades diárias',
+        'Persistência do uso apesar das consequências',
+        'Conflitos familiares ou sociais',
       ],
     ),
   ];
@@ -794,16 +889,18 @@ class _AbaSinaisSintomas extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Sinais & sintomas', style: tema.textTheme.headlineSmall),
+        Text('Sinais e sintomas', style: tema.textTheme.headlineSmall),
+
         const SizedBox(height: 8),
+
         const Text(
-          'Resumo de apoio para consulta rápida durante a sessão. '
-          'Toque em cada condição para ver os sinais mais comuns.',
+          'Material de apoio para consulta rápida durante '
+          'os atendimentos. Toque em uma condição para '
+          'visualizar seus sinais mais comuns.',
         ),
 
         const SizedBox(height: 20),
 
-        // Sinais de alerta que exigem atenção imediata.
         Card(
           color: tema.colorScheme.errorContainer,
           child: Padding(
@@ -817,44 +914,54 @@ class _AbaSinaisSintomas extends StatelessWidget {
                       Icons.warning_amber_rounded,
                       color: tema.colorScheme.onErrorContainer,
                     ),
+
                     const SizedBox(width: 8),
-                    Text(
-                      'Sinais de alerta',
-                      style: tema.textTheme.titleSmall?.copyWith(
-                        color: tema.colorScheme.onErrorContainer,
-                        fontWeight: FontWeight.bold,
+
+                    Expanded(
+                      child: Text(
+                        'Sinais de alerta',
+                        style: tema.textTheme.titleSmall?.copyWith(
+                          color: tema.colorScheme.onErrorContainer,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 8),
+
                 Text(
-                  'Priorize avaliação imediata e acione a rede de apoio '
-                  '(CAPS/UBS ou emergência) diante de:',
+                  'Situações que exigem avaliação '
+                  'prioritária e possível encaminhamento:',
                   style: TextStyle(color: tema.colorScheme.onErrorContainer),
                 ),
-                const SizedBox(height: 8),
+
+                const SizedBox(height: 12),
+
                 ...[
-                  'Ideias, planos ou tentativas de se matar ou se ferir',
-                  'Autoagressão (cortes, queimaduras)',
-                  'Desorganização grave, com perda de contato com a realidade',
-                  'Agressividade que coloca terceiros em risco',
-                  'Incapacidade de autocuidado ou recusa de água e alimento',
-                ].map((item) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
+                  'Pensamentos suicidas, planos ou tentativas',
+                  'Autoagressão',
+                  'Perda importante do contato com a realidade',
+                  'Comportamento que coloca outras pessoas em risco',
+                  'Incapacidade grave de autocuidado',
+                ].map(
+                  (sinal) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          '•  ',
-                          style: TextStyle(
-                            color: tema.colorScheme.onErrorContainer,
-                          ),
+                        Icon(
+                          Icons.circle,
+                          size: 7,
+                          color: tema.colorScheme.onErrorContainer,
                         ),
+
+                        const SizedBox(width: 10),
+
                         Expanded(
                           child: Text(
-                            item,
+                            sinal,
                             style: TextStyle(
                               color: tema.colorScheme.onErrorContainer,
                             ),
@@ -862,8 +969,8 @@ class _AbaSinaisSintomas extends StatelessWidget {
                         ),
                       ],
                     ),
-                  );
-                }),
+                  ),
+                ),
               ],
             ),
           ),
@@ -871,27 +978,28 @@ class _AbaSinaisSintomas extends StatelessWidget {
 
         const SizedBox(height: 20),
 
-        Text(
-          'Condições frequentes',
-          style: tema.textTheme.titleMedium,
-        ),
+        Text('Condições frequentes', style: tema.textTheme.titleMedium),
 
         const SizedBox(height: 8),
 
-        ..._transtornos.map((transtorno) {
-          return Card(
+        ..._transtornos.map(
+          (transtorno) => Card(
             margin: const EdgeInsets.only(bottom: 12),
             child: ExpansionTile(
               title: Text(
                 transtorno.nome,
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
+
               subtitle: Text(transtorno.resumo),
+
               childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+
               expandedCrossAxisAlignment: CrossAxisAlignment.start,
+
               children: transtorno.sinais.map((sinal) {
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -903,22 +1011,25 @@ class _AbaSinaisSintomas extends StatelessWidget {
                           color: tema.colorScheme.primary,
                         ),
                       ),
+
                       const SizedBox(width: 10),
+
                       Expanded(child: Text(sinal)),
                     ],
                   ),
                 );
               }).toList(),
             ),
-          );
-        }),
+          ),
+        ),
 
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
 
         Text(
-          'Material educativo de apoio ao profissional. Não substitui a '
-          'avaliação clínica, o uso de instrumentos validados nem o '
-          'julgamento do psicólogo.',
+          'Material informativo. A presença de sinais '
+          'isolados não confirma diagnóstico. '
+          'A avaliação deve ser realizada por '
+          'profissional habilitado.',
           style: tema.textTheme.bodySmall,
         ),
       ],

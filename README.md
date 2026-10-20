@@ -1,162 +1,189 @@
-# BEM-TE-VER
-### Sistema de Gestão e Organização para Profissionais de Saúde Mental
 
-## 1. SOBRE O PROJETO
+# Bem-te-ver 🐦
 
-O **Bem-te-ver** é um aplicativo desenvolvido com Flutter, destinado a auxiliar psicólogos e psiquiatras na organização e no gerenciamento de seus atendimentos, especialmente em municípios de pequeno porte e regiões rurais.
+**Sistema de gestão de consultórios de psicologia e psiquiatria**
 
-O projeto tem como objetivo oferecer uma solução tecnológica acessível e intuitiva para profissionais autônomos que enfrentam dificuldades na administração de seus consultórios, proporcionando maior praticidade no controle de pacientes, agendamentos e informações relacionadas aos atendimentos.
+Projeto desenvolvido durante o Hackathon IFES 2026, com o tema **Economia Local e Pequenos Negócios**.
 
-A iniciativa foi desenvolvida durante o **Hackathon IFES 2026**, cujo tema é **Economia Local e Pequenos Negócios**.
+## Sobre o projeto
 
-## 2. OBJETIVOS
+O Bem-te-ver é um protótipo de aplicativo desenvolvido em Flutter para auxiliar psicólogos e psiquiatras autônomos na organização de seus consultórios.
 
-O principal objetivo do Bem-te-ver é facilitar a gestão de pequenos consultórios por meio de uma aplicação que centralize informações e simplifique atividades administrativas.
+A proposta é oferecer uma ferramenta simples e acessível para profissionais que atuam especialmente em municípios de pequeno porte e regiões rurais.
 
-Entre seus objetivos específicos, destacam-se:
+O aplicativo centraliza o cadastro de pacientes, o gerenciamento de consultas e recursos terapêuticos de apoio ao atendimento.
 
-- Facilitar o cadastro e a organização de pacientes.
-- Proporcionar maior controle sobre agendamentos e horários de atendimento.
-- Reduzir a dependência de registros físicos e anotações dispersas.
-- Oferecer uma interface intuitiva e acessível.
-- Contribuir para a organização de profissionais autônomos que atuam em comunidades locais.
+## Problema identificado
 
-## 3. FUNCIONALIDADES
+Profissionais autônomos podem encontrar dificuldades para organizar os dados de pacientes, controlar horários e administrar seus atendimentos, especialmente quando dependem de cadernos, planilhas e anotações dispersas.
 
-### 3.1. Funcionalidades Implementadas
+O Bem-te-ver busca simplificar essas atividades administrativas em uma única interface.
 
-- Cadastro de profissionais de saúde mental.
-- Seleção da categoria profissional: Psicólogo ou Psiquiatra.
-- Validação simulada do formato do registro profissional (CRP ou CRM).
-- Validação dos campos obrigatórios do formulário.
-- Navegação entre as seções Pacientes, Agenda, Recursos e Consultório.
-- Visualização das informações do profissional cadastrado.
+## Funcionalidades implementadas
 
-### 3.2. Funcionalidades em Desenvolvimento
+### Cadastro profissional
 
-- Cadastro, edição, consulta e exclusão de pacientes.
-- Pesquisa e filtragem de pacientes cadastrados.
-- Gerenciamento de agendamentos e horários.
-- Organização de registros de atendimentos.
-- Implementação de armazenamento persistente.
-- Desenvolvimento de recursos complementares de apoio aos profissionais.
+- Cadastro de psicólogos e psiquiatras.
+- Seleção da categoria profissional.
+- Validação dos campos obrigatórios.
+- Validação demonstrativa do formato do CRP ou CRM.
+- Visualização das informações do profissional.
 
-## 4. TECNOLOGIAS UTILIZADAS
+**Observação:** os registros profissionais não são consultados em bases oficiais.
 
-O desenvolvimento do aplicativo utiliza as seguintes tecnologias e ferramentas:
+### Gerenciamento de pacientes
 
-| Tecnologia | Finalidade |
-|---|---|
-| Flutter | Framework para desenvolvimento da aplicação. |
-| Dart | Linguagem de programação principal. |
-| Material Design 3 | Componentes e padrões de interface. |
-| Android Studio | Emulação e ferramentas de desenvolvimento Android. |
-| Visual Studio Code | Ambiente de edição e desenvolvimento. |
-| Git | Controle de versões do código-fonte. |
-| GitHub | Hospedagem do repositório e colaboração da equipe. |
+- Cadastro de pacientes.
+- Listagem em ordem alfabética.
+- Pesquisa por nome, sem diferenciação de acentos e maiúsculas.
+- Filtros por situação do atendimento.
+- Edição dos dados cadastrados.
+- Exclusão mediante confirmação.
+- Proteção contra exclusão de pacientes com consultas vinculadas.
 
-## 5. ESTRUTURA DO PROJETO
+### Agenda de consultas
+
+- Agendamento de consultas.
+- Seleção de paciente, data e horário.
+- Definição do valor por hora.
+- Cálculo automático do valor total da consulta.
+- Verificação de conflitos de horários.
+- Edição e cancelamento de agendamentos.
+- Validação de valores e horários.
+
+### Recursos terapêuticos
+
+- Exercícios de respiração guiada.
+- Técnicas respiratórias com temporizador e animação.
+- Questionário PHQ-9 para rastreamento de sintomas depressivos.
+- Exibição da pontuação e da classificação após o preenchimento.
+- Alerta específico para resposta positiva à pergunta sobre morte ou autoagressão.
+- Consulta informativa de sinais e sintomas de transtornos mentais.
+
+**Atenção:** os recursos terapêuticos são ferramentas auxiliares e não substituem avaliação clínica, diagnóstico ou conduta de um profissional habilitado.
+
+## Tecnologias utilizadas
+
+- Flutter
+- Dart
+- Material Design 3
+- Android Studio
+- Visual Studio Code
+- Git e GitHub
+
+## Estrutura principal do projeto
 
 ```text
 hackaton/
-├── android/
+├── assets/
+│   └── images/
+│       └── logo-hackaton.png
 ├── lib/
 │   ├── main.dart
 │   ├── models/
+│   │   ├── agendamento.dart
+│   │   ├── paciente.dart
 │   │   └── profissional.dart
 │   └── screens/
-│       └── cadastro_profissional_screen.dart
+│       ├── agenda_screen.dart
+│       ├── cadastro_profissional_screen.dart
+│       ├── pacientes_screen.dart
+│       └── recursos_screen.dart
 ├── test/
+│   ├── agendamento_test.dart
+│   ├── edicao_paciente_test.dart
+│   ├── exclusao_paciente_test.dart
+│   ├── pacientes_screen_test.dart
 │   └── widget_test.dart
+├── android/
 ├── web/
 ├── pubspec.yaml
 └── README.md
 ```
 
-A estrutura será expandida conforme a implementação das novas funcionalidades.
+## Instalação e execução
 
-## 6. INSTALAÇÃO E EXECUÇÃO
+É necessário ter o Flutter SDK instalado e configurado.
 
-### Pré-requisitos
-
-- Flutter SDK instalado e configurado.
-- Android SDK para execução em dispositivos Android.
-- Emulador Android ou dispositivo físico compatível.
-
-### 6.1. Clonar o Repositório
+Clone o repositório:
 
 ```bash
 git clone https://github.com/GMiranda0432/hackaton.git
 ```
 
-### 6.2. Acessar o Diretório
+Entre na pasta:
 
 ```bash
 cd hackaton
 ```
 
-### 6.3. Instalar as Dependências
+Instale as dependências:
 
 ```bash
 flutter pub get
 ```
 
-### 6.4. Executar o Aplicativo
+Execute o aplicativo:
 
 ```bash
 flutter run
 ```
 
-Para executar no navegador Google Chrome:
+Para executar no navegador Chrome:
 
 ```bash
 flutter run -d chrome
 ```
 
-### 6.5. Análise e Testes
+## Verificações
 
-Para verificar possíveis problemas no código:
+Análise estática:
 
 ```bash
 flutter analyze
 ```
 
-Para executar os testes automatizados:
+Testes automatizados:
 
 ```bash
 flutter test
 ```
 
-## 7. ESTÁGIO ATUAL DO DESENVOLVIMENTO
+## Limitações do protótipo
 
-O aplicativo encontra-se em fase inicial de implementação.
+O Bem-te-ver foi desenvolvido como um produto mínimo viável (MVP) durante um hackathon de 24 horas.
 
-Atualmente, o cadastro profissional está funcional, utilizando uma validação demonstrativa do formato do CRP ou CRM, sem consulta às bases oficiais dos respectivos conselhos profissionais.
+Nesta versão:
 
-As informações cadastradas permanecem temporariamente em memória, não sendo preservadas após o encerramento da aplicação.
+- Os dados ficam armazenados temporariamente na memória do aplicativo.
+- Os cadastros e agendamentos não são preservados após o encerramento da aplicação.
+- Não existe autenticação segura ou validação oficial de registro profissional.
+- Não existe integração com sistemas externos de saúde.
+- Os recursos clínicos são demonstrativos e informativos.
 
-As próximas etapas contemplam a implementação do gerenciamento de pacientes, agendamentos e persistência dos dados.
+Por essas limitações, o protótipo deve ser demonstrado somente com dados fictícios, sem informações reais ou sensíveis de pacientes.
 
-O repositório também contém arquivos da implementação Android nativa anterior, que serão substituídos durante a migração para Flutter.
+## Melhorias futuras
 
-## 8. HACKATHON IFES 2026
+- Persistência local ou em banco de dados.
+- Autenticação e controle de acesso.
+- Proteção e tratamento adequado de dados pessoais e sensíveis.
+- Lembretes de consultas.
+- Relatórios administrativos.
+- Ampliação dos recursos terapêuticos.
+- Validação do aplicativo com profissionais da área.
 
-O Bem-te-ver é um projeto desenvolvido durante o Hackathon promovido pelo Instituto Federal do Espírito Santo (IFES), Campus Santa Teresa, em outubro de 2026.
+## Hackathon IFES 2026
 
 **Tema:** Economia Local e Pequenos Negócios.
 
-**Proposta:** Desenvolver uma solução tecnológica que contribua para a organização e o crescimento de pequenos negócios e profissionais autônomos da região.
+O projeto busca apoiar profissionais autônomos na administração de pequenos consultórios, contribuindo para a organização dos serviços e o fortalecimento da economia local.
 
-O projeto busca atender especialmente pequenos consultórios de saúde mental, promovendo maior eficiência administrativa e contribuindo para o desenvolvimento da economia local.
+O desenvolvimento contou com o auxílio de ferramentas de inteligência artificial, incluindo o ChatGPT, para apoio à programação, revisão e organização do projeto.
 
-## 9. EQUIPE DE DESENVOLVIMENTO
-
-Projeto desenvolvido por uma equipe de quatro integrantes participantes do Hackathon IFES 2026.
-
-**Repositório oficial:** https://github.com/GMiranda0432/hackaton
-
-O desenvolvimento contou com o auxílio de ferramentas de Inteligência Artificial, incluindo o ChatGPT, utilizadas como suporte à implementação, revisão e organização do código.
+**Repositório:** https://github.com/GMiranda0432/hackaton
 
 ---
 
 **Bem-te-ver — Tecnologia e organização a serviço do cuidado.**
+
