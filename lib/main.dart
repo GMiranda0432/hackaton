@@ -7,6 +7,7 @@ import 'models/profissional.dart';
 import 'screens/agenda_screen.dart';
 import 'screens/cadastro_profissional_screen.dart';
 import 'screens/pacientes_screen.dart';
+import 'screens/recursos_screen.dart';
 
 void main() {
   runApp(const BemTeVerApp());
@@ -191,7 +192,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
             onExcluir: _excluirAgendamento,
           ),
 
-          const Center(child: Text('Recursos terapêuticos')),
+          const RecursosScreen(),
 
           ConsultorioScreen(profissional: widget.profissional),
         ],
