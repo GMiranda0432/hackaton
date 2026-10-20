@@ -33,6 +33,7 @@ class BemTeVerApp extends StatelessWidget {
   }
 }
 
+// Controla o cadastro e a entrada do profissional.
 class EntradaApp extends StatefulWidget {
   const EntradaApp({super.key});
 
@@ -59,6 +60,7 @@ class _EntradaAppState extends State<EntradaApp> {
   }
 }
 
+// Estrutura principal do aplicativo.
 class TelaPrincipal extends StatefulWidget {
   final Profissional profissional;
 
@@ -81,12 +83,29 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
     'Consultório',
   ];
 
+  // Cadastra um novo paciente.
   void _cadastrarPaciente(Paciente paciente) {
     setState(() {
       _pacientes.add(paciente);
     });
   }
 
+  // Atualiza um paciente existente, preservando seu ID.
+  void _editarPaciente(Paciente atualizado) {
+    final indice = _pacientes.indexWhere(
+      (paciente) => paciente.id == atualizado.id,
+    );
+
+    if (indice == -1) {
+      return;
+    }
+
+    setState(() {
+      _pacientes[indice] = atualizado;
+    });
+  }
+
+  // Adiciona ou atualiza um agendamento.
   void _salvarAgendamento(Agendamento agendamento) {
     setState(() {
       final indice = _agendamentos.indexWhere(
@@ -101,6 +120,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
     });
   }
 
+  // Remove um agendamento pelo ID.
   void _excluirAgendamento(String id) {
     setState(() {
       _agendamentos.removeWhere((agendamento) => agendamento.id == id);
@@ -136,13 +156,14 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
       body: IndexedStack(
         index: paginaAtual,
         children: [
-          // Cadastro e pesquisa de pacientes.
+          // Pacientes: cadastro, pesquisa, filtros e edição.
           PacientesScreen(
             pacientes: _pacientes,
             onCadastrar: _cadastrarPaciente,
+            onEditar: _editarPaciente,
           ),
 
-          // Agenda funcional.
+          // Agenda de consultas.
           AgendaScreen(
             pacientes: _pacientes,
             agendamentos: _agendamentos,
@@ -150,10 +171,10 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
             onExcluir: _excluirAgendamento,
           ),
 
-          // Área de recursos.
+          // Recursos terapêuticos.
           const Center(child: Text('Recursos terapêuticos')),
 
-          // Dados do profissional.
+          // Informações do profissional.
           ConsultorioScreen(profissional: widget.profissional),
         ],
       ),
@@ -192,6 +213,7 @@ class _TelaPrincipalState extends State<TelaPrincipal> {
   }
 }
 
+// Exibe os dados do profissional cadastrado.
 class ConsultorioScreen extends StatelessWidget {
   final Profissional profissional;
 
@@ -231,22 +253,18 @@ class ConsultorioScreen extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 8),
-
                 Text(profissional.email),
 
                 const SizedBox(height: 8),
-
                 Text(profissional.tipo.descricao),
 
                 const SizedBox(height: 8),
-
                 Text(
                   '${profissional.tipo.conselho}: '
                   '${profissional.registro}',
                 ),
 
                 const SizedBox(height: 8),
-
                 Text('UF: ${profissional.uf}'),
               ],
             ),

@@ -5,11 +5,13 @@ import '../models/paciente.dart';
 class PacientesScreen extends StatefulWidget {
   final List<Paciente> pacientes;
   final ValueChanged<Paciente> onCadastrar;
+  final ValueChanged<Paciente>? onEditar;
 
   const PacientesScreen({
     super.key,
     required this.pacientes,
     required this.onCadastrar,
+    this.onEditar,
   });
 
   @override
@@ -28,7 +30,7 @@ class _PacientesScreenState extends State<PacientesScreen> {
     super.dispose();
   }
 
-  // Padroniza o texto para facilitar a pesquisa.
+  // Normaliza nomes para pesquisa sem acentos e maiúsculas.
   String _normalizar(String texto) {
     return texto
         .toLowerCase()
@@ -40,13 +42,13 @@ class _PacientesScreenState extends State<PacientesScreen> {
         .replaceAll('ç', 'c');
   }
 
+  // Aplica pesquisa, filtro e ordenação alfabética.
   List<Paciente> get _pacientesFiltrados {
     final pesquisaNormalizada = _normalizar(_pesquisa.trim());
 
     final resultados = widget.pacientes.where((paciente) {
-      final nomeNormalizado = _normalizar(paciente.nome);
-
-      final correspondeNome = nomeNormalizado.contains(pesquisaNormalizada);
+      final correspondeNome = _normalizar(paciente.nome)
+          .contains(pesquisaNormalizada);
 
       final correspondeStatus =
           _filtroStatus == null || paciente.status == _filtroStatus;
@@ -78,6 +80,7 @@ class _PacientesScreenState extends State<PacientesScreen> {
     });
   }
 
+  // Abre o formulário para cadastrar um paciente.
   Future<void> _abrirCadastro(BuildContext context) async {
     final paciente = await showModalBottomSheet<Paciente>(
       context: context,
@@ -96,6 +99,32 @@ class _PacientesScreenState extends State<PacientesScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Paciente cadastrado com sucesso!')),
+    );
+  }
+
+  // Abre o formulário preenchido para editar um paciente.
+  Future<void> _abrirEdicao(BuildContext context, Paciente paciente) async {
+    if (widget.onEditar == null) {
+      return;
+    }
+
+    final atualizado = await showModalBottomSheet<Paciente>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) {
+        return FormularioPaciente(paciente: paciente);
+      },
+    );
+
+    if (atualizado == null || !context.mounted) {
+      return;
+    }
+
+    widget.onEditar!(atualizado);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Paciente atualizado com sucesso!')),
     );
   }
 
@@ -145,7 +174,7 @@ class _PacientesScreenState extends State<PacientesScreen> {
 
           const SizedBox(height: 20),
 
-          // Campo de pesquisa.
+          // Pesquisa por nome.
           TextField(
             key: const Key('campo_pesquisa_paciente'),
             controller: _pesquisaController,
@@ -178,7 +207,7 @@ class _PacientesScreenState extends State<PacientesScreen> {
 
           const SizedBox(height: 8),
 
-          // Filtros com rolagem horizontal.
+          // Filtros por situação.
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -218,7 +247,7 @@ class _PacientesScreenState extends State<PacientesScreen> {
 
           const SizedBox(height: 20),
 
-          // Botão de cadastro existente.
+          // Cadastro de pacientes.
           FilledButton.icon(
             key: const Key('btn_novo_paciente'),
             onPressed: () => _abrirCadastro(context),
@@ -231,7 +260,6 @@ class _PacientesScreenState extends State<PacientesScreen> {
 
           const SizedBox(height: 20),
 
-          // Contador de resultados.
           if (widget.pacientes.isNotEmpty) ...[
             Text(
               '${pacientesFiltrados.length} '
@@ -241,7 +269,7 @@ class _PacientesScreenState extends State<PacientesScreen> {
             const SizedBox(height: 12),
           ],
 
-          // Resultado da pesquisa.
+          // Exibição da listagem.
           if (pacientesFiltrados.isEmpty)
             SizedBox(
               height: 250,
@@ -251,7 +279,12 @@ class _PacientesScreenState extends State<PacientesScreen> {
             )
           else
             ...pacientesFiltrados.map(
-              (paciente) => _CardPaciente(paciente: paciente),
+              (paciente) => _CardPaciente(
+                paciente: paciente,
+                onEditar: widget.onEditar == null
+                    ? null
+                    : () => _abrirEdicao(context, paciente),
+              ),
             ),
         ],
       ),
@@ -259,7 +292,7 @@ class _PacientesScreenState extends State<PacientesScreen> {
   }
 }
 
-// Mensagem exibida quando ainda não existem pacientes.
+// Mensagem quando não existem pacientes.
 class _ListaVazia extends StatelessWidget {
   const _ListaVazia();
 
@@ -295,7 +328,7 @@ class _ListaVazia extends StatelessWidget {
   }
 }
 
-// Mensagem exibida quando os filtros não encontram pacientes.
+// Mensagem quando a pesquisa não encontra pacientes.
 class _SemResultados extends StatelessWidget {
   final VoidCallback onLimparFiltros;
 
@@ -342,11 +375,12 @@ class _SemResultados extends StatelessWidget {
   }
 }
 
-// Card com os dados resumidos de cada paciente.
+// Card de cada paciente, incluindo o botão Editar.
 class _CardPaciente extends StatelessWidget {
   final Paciente paciente;
+  final VoidCallback? onEditar;
 
-  const _CardPaciente({required this.paciente});
+  const _CardPaciente({required this.paciente, this.onEditar});
 
   String get iniciais {
     final partes = paciente.nome.trim().split(RegExp(r'\s+'));
@@ -367,6 +401,15 @@ class _CardPaciente extends StatelessWidget {
             paciente.nome,
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
+
+          trailing: onEditar == null
+              ? null
+              : IconButton(
+                  key: Key('btn_editar_${paciente.id}'),
+                  tooltip: 'Editar paciente',
+                  onPressed: onEditar,
+                  icon: const Icon(Icons.edit_outlined),
+                ),
 
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -391,9 +434,11 @@ class _CardPaciente extends StatelessWidget {
   }
 }
 
-// Formulário de cadastro de pacientes.
+// Formulário reutilizado para cadastro e edição.
 class FormularioPaciente extends StatefulWidget {
-  const FormularioPaciente({super.key});
+  final Paciente? paciente;
+
+  const FormularioPaciente({super.key, this.paciente});
 
   @override
   State<FormularioPaciente> createState() => _FormularioPacienteState();
@@ -407,6 +452,22 @@ class _FormularioPacienteState extends State<FormularioPaciente> {
   final _telefoneController = TextEditingController();
 
   StatusPaciente _status = StatusPaciente.emAtendimento;
+
+  bool get _editando => widget.paciente != null;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final paciente = widget.paciente;
+
+    if (paciente != null) {
+      _nomeController.text = paciente.nome;
+      _idadeController.text = paciente.idade.toString();
+      _telefoneController.text = paciente.telefone;
+      _status = paciente.status;
+    }
+  }
 
   @override
   void dispose() {
@@ -422,7 +483,10 @@ class _FormularioPacienteState extends State<FormularioPaciente> {
     }
 
     final paciente = Paciente(
-      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      // Na edição, mantém o identificador original.
+      id:
+          widget.paciente?.id ??
+          DateTime.now().microsecondsSinceEpoch.toString(),
       nome: _nomeController.text.trim(),
       idade: int.parse(_idadeController.text.trim()),
       telefone: _telefoneController.text.trim(),
@@ -445,16 +509,21 @@ class _FormularioPacienteState extends State<FormularioPaciente> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Cadastrar paciente',
+                _editando ? 'Editar paciente' : 'Cadastrar paciente',
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
 
               const SizedBox(height: 8),
 
-              const Text('Preencha as informações do paciente.'),
+              Text(
+                _editando
+                    ? 'Atualize as informações do paciente.'
+                    : 'Preencha as informações do paciente.',
+              ),
 
               const SizedBox(height: 24),
 
+              // Nome completo.
               TextFormField(
                 key: const Key('campo_paciente_nome'),
                 controller: _nomeController,
@@ -474,6 +543,7 @@ class _FormularioPacienteState extends State<FormularioPaciente> {
 
               const SizedBox(height: 16),
 
+              // Idade.
               TextFormField(
                 key: const Key('campo_paciente_idade'),
                 controller: _idadeController,
@@ -495,6 +565,7 @@ class _FormularioPacienteState extends State<FormularioPaciente> {
 
               const SizedBox(height: 16),
 
+              // Telefone.
               TextFormField(
                 key: const Key('campo_paciente_telefone'),
                 controller: _telefoneController,
@@ -523,6 +594,7 @@ class _FormularioPacienteState extends State<FormularioPaciente> {
 
               const SizedBox(height: 16),
 
+              // Situação do paciente.
               DropdownButtonFormField<StatusPaciente>(
                 initialValue: _status,
                 decoration: const InputDecoration(
@@ -550,7 +622,9 @@ class _FormularioPacienteState extends State<FormularioPaciente> {
                 key: const Key('btn_salvar_paciente'),
                 onPressed: _salvar,
                 icon: const Icon(Icons.save_outlined),
-                label: const Text('Salvar paciente'),
+                label: Text(
+                  _editando ? 'Salvar alterações' : 'Salvar paciente',
+                ),
                 style: FilledButton.styleFrom(
                   minimumSize: const Size.fromHeight(52),
                 ),
